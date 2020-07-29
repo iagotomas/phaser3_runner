@@ -1,0 +1,33 @@
+#!/usr/bin/env node
+"use strict";
+
+var fs = require('fs');
+var path = require('path');
+var http = require('http');
+var httpPort = 8080;
+var staticBasePath = './build';
+
+var staticServe = function(req, res) {
+    console.log("Request [" + req.url + "]")
+    var resolvedBase = path.resolve(staticBasePath);
+    var safeSuffix = path.normalize(req.url).replace(/^(\.\.[\/\\])+/, '');
+    var fileLoc = path.join(resolvedBase, safeSuffix);
+    
+    fs.readFile(fileLoc, function(err, data) {
+        if (err) {
+            res.writeHead(404, 'Not Found');
+            res.write('404: File Not Found!');
+            return res.end();
+        }
+        
+        res.statusCode = 200;
+
+        res.write(data);
+        return res.end();
+    });
+};
+
+var httpServer = http.createServer(staticServe);
+console.log("Start http server on port [" + httpPort + "]");
+
+httpServer.listen(httpPort);
