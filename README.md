@@ -3,6 +3,8 @@
 This project builds a simple runner game using Phaser3. 
 It's written in es6 and uses webpack 3 and babel to generate browseable version of the project. 
 
+For further information visit https://iagotomas.github.io/phaser3_runner/
+
 ## Requirements
 
 - Yarn 1.22+
