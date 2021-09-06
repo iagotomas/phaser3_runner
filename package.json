@@ -12,7 +12,7 @@
   "license": "ISC",
   "dependencies": {
     "babel-loader": "^8.1.0",
-    "highcharts": "6.0.7",
+    "highcharts": "9.0.0",
     "phaser": "^3.24.0"
   },
   "devDependencies": {
