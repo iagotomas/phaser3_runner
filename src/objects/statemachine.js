@@ -1,4 +1,14 @@
+import State from "./state";
+/**
+ * StateMachine handle state and its management. Call step() to proceed with current state and transition() for going to another state.
+ */
 export default class StateMachine {
+  /**
+   * 
+   * @param {State} initialState The initial state
+   * @param {Array}[State] possibleStates Map of states that can be employed
+   * @param {...any} stateArgs 
+   */
     constructor(initialState, possibleStates, stateArgs=[]) {
       this.initialState = initialState;
       this.possibleStates = possibleStates;
@@ -22,6 +32,11 @@ export default class StateMachine {
       this.possibleStates[this.state].execute(...this.stateArgs);
     }
   
+    /**
+     * Transition to a new state
+     * @param {State} newState New state to transition to
+     * @param  {...any} enterArgs Arguments required by the state if any
+     */
     transition(newState, ...enterArgs) {
       this.state = newState;
       this.possibleStates[this.state].enter(...this.stateArgs, ...enterArgs);

@@ -1,0 +1,327 @@
+{"frames": [
+
+{
+	"filename": "castle_unicorn",
+	"frame": {"x":1,"y":1,"w":1288,"h":945},
+	"rotated": false,
+	"trimmed": false,
+	"spriteSourceSize": {"x":0,"y":0,"w":1288,"h":945},
+	"sourceSize": {"w":1288,"h":945},
+	"pivot": {"x":0.5,"y":0.5}
+},
+{
+	"filename": "cloud_aaa",
+	"frame": {"x":975,"y":1384,"w":97,"h":55},
+	"rotated": false,
+	"trimmed": true,
+	"spriteSourceSize": {"x":4,"y":10,"w":97,"h":55},
+	"sourceSize": {"w":112,"h":74},
+	"pivot": {"x":0.5,"y":0.5}
+},
+{
+	"filename": "cloud_aab",
+	"frame": {"x":1628,"y":1260,"w":111,"h":74},
+	"rotated": false,
+	"trimmed": false,
+	"spriteSourceSize": {"x":0,"y":0,"w":111,"h":74},
+	"sourceSize": {"w":111,"h":74},
+	"pivot": {"x":0.5,"y":0.5}
+},
+{
+	"filename": "cloud_aac",
+	"frame": {"x":1303,"y":1294,"w":164,"h":89},
+	"rotated": false,
+	"trimmed": false,
+	"spriteSourceSize": {"x":0,"y":0,"w":164,"h":89},
+	"sourceSize": {"w":164,"h":89},
+	"pivot": {"x":0.5,"y":0.5}
+},
+{
+	"filename": "cloud_aad",
+	"frame": {"x":1511,"y":1260,"w":115,"h":82},
+	"rotated": false,
+	"trimmed": false,
+	"spriteSourceSize": {"x":0,"y":0,"w":115,"h":82},
+	"sourceSize": {"w":115,"h":82},
+	"pivot": {"x":0.5,"y":0.5}
+},
+{
+	"filename": "cloud_aae",
+	"frame": {"x":896,"y":1384,"w":77,"h":60},
+	"rotated": false,
+	"trimmed": false,
+	"spriteSourceSize": {"x":0,"y":0,"w":77,"h":60},
+	"sourceSize": {"w":77,"h":60},
+	"pivot": {"x":0.5,"y":0.5}
+},
+{
+	"filename": "cloud_big_aaa",
+	"frame": {"x":1,"y":948,"w":893,"h":489},
+	"rotated": false,
+	"trimmed": true,
+	"spriteSourceSize": {"x":18,"y":17,"w":893,"h":489},
+	"sourceSize": {"w":941,"h":526},
+	"pivot": {"x":0.5,"y":0.5}
+},
+{
+	"filename": "little_girl_jumping_1",
+	"frame": {"x":1709,"y":219,"w":207,"h":207},
+	"rotated": false,
+	"trimmed": true,
+	"spriteSourceSize": {"x":16,"y":2,"w":207,"h":207},
+	"sourceSize": {"w":224,"h":224},
+	"pivot": {"x":0.5,"y":0.5}
+},
+{
+	"filename": "little_girl_jumping_2",
+	"frame": {"x":1709,"y":428,"w":207,"h":207},
+	"rotated": false,
+	"trimmed": true,
+	"spriteSourceSize": {"x":16,"y":2,"w":207,"h":207},
+	"sourceSize": {"w":224,"h":224},
+	"pivot": {"x":0.5,"y":0.5}
+},
+{
+	"filename": "little_girl_jumping_3",
+	"frame": {"x":1500,"y":437,"w":207,"h":207},
+	"rotated": false,
+	"trimmed": true,
+	"spriteSourceSize": {"x":16,"y":2,"w":207,"h":207},
+	"sourceSize": {"w":224,"h":224},
+	"pivot": {"x":0.5,"y":0.5}
+},
+{
+	"filename": "little_girl_jumping_4",
+	"frame": {"x":1709,"y":637,"w":207,"h":207},
+	"rotated": false,
+	"trimmed": true,
+	"spriteSourceSize": {"x":16,"y":2,"w":207,"h":207},
+	"sourceSize": {"w":224,"h":224},
+	"pivot": {"x":0.5,"y":0.5}
+},
+{
+	"filename": "little_girl_riding_01",
+	"frame": {"x":1291,"y":219,"w":207,"h":216},
+	"rotated": false,
+	"trimmed": true,
+	"spriteSourceSize": {"x":17,"y":8,"w":207,"h":216},
+	"sourceSize": {"w":224,"h":224},
+	"pivot": {"x":0.5,"y":0.5}
+},
+{
+	"filename": "little_girl_riding_02",
+	"frame": {"x":1519,"y":646,"w":188,"h":203},
+	"rotated": false,
+	"trimmed": true,
+	"spriteSourceSize": {"x":28,"y":16,"w":188,"h":203},
+	"sourceSize": {"w":224,"h":224},
+	"pivot": {"x":0.5,"y":0.5}
+},
+{
+	"filename": "little_girl_riding_03",
+	"frame": {"x":1709,"y":846,"w":196,"h":202},
+	"rotated": false,
+	"trimmed": true,
+	"spriteSourceSize": {"x":20,"y":16,"w":196,"h":202},
+	"sourceSize": {"w":224,"h":224},
+	"pivot": {"x":0.5,"y":0.5}
+},
+{
+	"filename": "little_girl_riding_04",
+	"frame": {"x":1291,"y":1,"w":209,"h":216},
+	"rotated": false,
+	"trimmed": true,
+	"spriteSourceSize": {"x":1,"y":8,"w":209,"h":216},
+	"sourceSize": {"w":224,"h":224},
+	"pivot": {"x":0.5,"y":0.5}
+},
+{
+	"filename": "little_girl_riding_05",
+	"frame": {"x":1711,"y":1,"w":204,"h":216},
+	"rotated": false,
+	"trimmed": true,
+	"spriteSourceSize": {"x":1,"y":0,"w":204,"h":216},
+	"sourceSize": {"w":224,"h":218},
+	"pivot": {"x":0.5,"y":0.5}
+},
+{
+	"filename": "little_girl_riding_06",
+	"frame": {"x":1313,"y":1090,"w":196,"h":202},
+	"rotated": false,
+	"trimmed": true,
+	"spriteSourceSize": {"x":20,"y":16,"w":196,"h":202},
+	"sourceSize": {"w":224,"h":224},
+	"pivot": {"x":0.5,"y":0.5}
+},
+{
+	"filename": "little_girl_riding_07",
+	"frame": {"x":1519,"y":851,"w":188,"h":203},
+	"rotated": false,
+	"trimmed": true,
+	"spriteSourceSize": {"x":28,"y":16,"w":188,"h":203},
+	"sourceSize": {"w":224,"h":224},
+	"pivot": {"x":0.5,"y":0.5}
+},
+{
+	"filename": "little_girl_riding_08",
+	"frame": {"x":1502,"y":1,"w":207,"h":216},
+	"rotated": false,
+	"trimmed": true,
+	"spriteSourceSize": {"x":9,"y":8,"w":207,"h":216},
+	"sourceSize": {"w":224,"h":224},
+	"pivot": {"x":0.5,"y":0.5}
+},
+{
+	"filename": "little_girl_riding_09",
+	"frame": {"x":1519,"y":1056,"w":196,"h":202},
+	"rotated": false,
+	"trimmed": true,
+	"spriteSourceSize": {"x":20,"y":16,"w":196,"h":202},
+	"sourceSize": {"w":224,"h":224},
+	"pivot": {"x":0.5,"y":0.5}
+},
+{
+	"filename": "little_girl_riding_10",
+	"frame": {"x":1105,"y":1166,"w":196,"h":199},
+	"rotated": false,
+	"trimmed": true,
+	"spriteSourceSize": {"x":20,"y":16,"w":196,"h":199},
+	"sourceSize": {"w":224,"h":224},
+	"pivot": {"x":0.5,"y":0.5}
+},
+{
+	"filename": "little_girl_riding_11",
+	"frame": {"x":1717,"y":1050,"w":196,"h":202},
+	"rotated": false,
+	"trimmed": true,
+	"spriteSourceSize": {"x":20,"y":16,"w":196,"h":202},
+	"sourceSize": {"w":224,"h":224},
+	"pivot": {"x":0.5,"y":0.5}
+},
+{
+	"filename": "little_girl_riding_12",
+	"frame": {"x":896,"y":948,"w":209,"h":216},
+	"rotated": false,
+	"trimmed": true,
+	"spriteSourceSize": {"x":1,"y":8,"w":209,"h":216},
+	"sourceSize": {"w":224,"h":224},
+	"pivot": {"x":0.5,"y":0.5}
+},
+{
+	"filename": "little_girl_riding_orig_1",
+	"frame": {"x":1291,"y":655,"w":204,"h":216},
+	"rotated": false,
+	"trimmed": true,
+	"spriteSourceSize": {"x":13,"y":6,"w":204,"h":216},
+	"sourceSize": {"w":224,"h":224},
+	"pivot": {"x":0.5,"y":0.5}
+},
+{
+	"filename": "little_girl_riding_orig_2",
+	"frame": {"x":896,"y":1166,"w":207,"h":216},
+	"rotated": false,
+	"trimmed": true,
+	"spriteSourceSize": {"x":17,"y":8,"w":207,"h":216},
+	"sourceSize": {"w":224,"h":224},
+	"pivot": {"x":0.5,"y":0.5}
+},
+{
+	"filename": "little_girl_standing_1",
+	"frame": {"x":1291,"y":437,"w":207,"h":216},
+	"rotated": false,
+	"trimmed": true,
+	"spriteSourceSize": {"x":15,"y":2,"w":207,"h":216},
+	"sourceSize": {"w":224,"h":224},
+	"pivot": {"x":0.5,"y":0.5}
+},
+{
+	"filename": "little_girl_standing_2",
+	"frame": {"x":1107,"y":948,"w":204,"h":215},
+	"rotated": false,
+	"trimmed": true,
+	"spriteSourceSize": {"x":1,"y":0,"w":204,"h":215},
+	"sourceSize": {"w":224,"h":224},
+	"pivot": {"x":0.5,"y":0.5}
+},
+{
+	"filename": "little_girl_standing_3",
+	"frame": {"x":1313,"y":873,"w":204,"h":215},
+	"rotated": false,
+	"trimmed": true,
+	"spriteSourceSize": {"x":1,"y":0,"w":204,"h":215},
+	"sourceSize": {"w":224,"h":224},
+	"pivot": {"x":0.5,"y":0.5}
+},
+{
+	"filename": "little_girl_standing_4",
+	"frame": {"x":1500,"y":219,"w":207,"h":216},
+	"rotated": false,
+	"trimmed": true,
+	"spriteSourceSize": {"x":16,"y":2,"w":207,"h":216},
+	"sourceSize": {"w":224,"h":224},
+	"pivot": {"x":0.5,"y":0.5}
+},
+{
+	"filename": "tennis_ball",
+	"frame": {"x":1074,"y":1384,"w":27,"h":28},
+	"rotated": false,
+	"trimmed": false,
+	"spriteSourceSize": {"x":0,"y":0,"w":27,"h":28},
+	"sourceSize": {"w":27,"h":28},
+	"pivot": {"x":0.5,"y":0.5}
+},
+{
+	"filename": "tennis_ball_blue",
+	"frame": {"x":1469,"y":1294,"w":27,"h":28},
+	"rotated": false,
+	"trimmed": false,
+	"spriteSourceSize": {"x":0,"y":0,"w":27,"h":28},
+	"sourceSize": {"w":27,"h":28},
+	"pivot": {"x":0.5,"y":0.5}
+},
+{
+	"filename": "tennis_ball_green",
+	"frame": {"x":1469,"y":1324,"w":27,"h":28},
+	"rotated": false,
+	"trimmed": false,
+	"spriteSourceSize": {"x":0,"y":0,"w":27,"h":28},
+	"sourceSize": {"w":27,"h":28},
+	"pivot": {"x":0.5,"y":0.5}
+},
+{
+	"filename": "tennis_ball_orange",
+	"frame": {"x":1469,"y":1354,"w":27,"h":28},
+	"rotated": false,
+	"trimmed": false,
+	"spriteSourceSize": {"x":0,"y":0,"w":27,"h":28},
+	"sourceSize": {"w":27,"h":28},
+	"pivot": {"x":0.5,"y":0.5}
+},
+{
+	"filename": "tennis_ball_red",
+	"frame": {"x":1074,"y":1414,"w":27,"h":28},
+	"rotated": false,
+	"trimmed": false,
+	"spriteSourceSize": {"x":0,"y":0,"w":27,"h":28},
+	"sourceSize": {"w":27,"h":28},
+	"pivot": {"x":0.5,"y":0.5}
+},
+{
+	"filename": "tennis_ball_yellow",
+	"frame": {"x":1741,"y":1254,"w":27,"h":28},
+	"rotated": false,
+	"trimmed": false,
+	"spriteSourceSize": {"x":0,"y":0,"w":27,"h":28},
+	"sourceSize": {"w":27,"h":28},
+	"pivot": {"x":0.5,"y":0.5}
+}],
+"meta": {
+	"app": "https://www.codeandweb.com/texturepacker",
+	"version": "1.0",
+	"image": "game_sprites.png",
+	"format": "RGBA8888",
+	"size": {"w":1917,"h":1445},
+	"scale": "1",
+	"smartupdate": "$TexturePacker:SmartUpdate:c3d112d1f9259e1a18b65ff95aef2e4b:2da14c6e329191b9178317c5a5bb1e49:0a4c74891bedeb618db303abf0581f0e$"
+}
+}

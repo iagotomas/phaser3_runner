@@ -11,9 +11,9 @@
   "author": "iago",
   "license": "ISC",
   "dependencies": {
-    "babel-loader": "^8.1.0",
+    "babel-loader": "^8.4.1",
     "highcharts": "6.0.7",
-    "phaser": "^3.24.0"
+    "phaser": "^3.87.0"
   },
   "devDependencies": {
     "@babel/core": "^7.10.5",
