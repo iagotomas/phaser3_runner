@@ -25,6 +25,8 @@ export default class Game extends Scene {
         this.platformGroup = null;
         this.moveTarget = null;
         this.targetMarker = null;
+        // Initialize score from localStorage or default to 0
+        this.coinScore = parseInt(localStorage.getItem('coinScore')) || 0;
     }
 
     preload() {}
@@ -89,13 +91,9 @@ export default class Game extends Scene {
         // Create cloud manager with proper depth
         this.cloudManager = new CloudManager(this, {
             ground: this.platformGroup,
-            cloudCount: 10,
-            minDropDelay: 2000,
-            maxDropDelay: 5000,
             depth: 15,
             onBallCollect: (points) => {
-                this.coinScore += points
-                this.coinCounter.setText(`${this.coinScore}`)
+                this.updateScore(this.coinScore + points)
             }
         })
         // Set depth for clouds and balls
@@ -111,9 +109,6 @@ export default class Game extends Scene {
 
         // Set up controls
         this.keys = this.input.keyboard.createCursorKeys()
-        
-        // Add mobile controls
-        //this.createMobileControls()
 
         // Add resize handler
         this.scale.on('resize', this.handleResize, this)
@@ -128,9 +123,8 @@ export default class Game extends Scene {
             this.scale.startFullscreen()
         }, this)
 
-        // Score display
-        this.coinScore = 0
-        this.coinCounter = this.add.text(900, 20, `${this.coinScore}`, {
+        // Score display with persistent value
+        this.coinCounter = this.add.text(20, 20, `${this.coinScore}`, {
             fontSize: '70px',
             fontWeight: 'bold',
             fontFamily: 'Coming Soon',
@@ -138,12 +132,12 @@ export default class Game extends Scene {
             stroke: '#8c1679',
             strokeThickness: 10,
             padding: { x: 10, y: 10 }  
-
         })
         this.coinCounter.setScrollFactor(0);
+        this.coinCounter.setDepth(100);
 
         // Add FPS counter
-        this.fpsText = this.add.text(10, 10, 'FPS: 0', {
+        this.fpsText = this.add.text(this.scale.width - 100, 10, 'FPS: 0', {
             fontSize: '16px',
             fontFamily: 'Arial',
             fill: '#ffffff',
@@ -176,7 +170,7 @@ export default class Game extends Scene {
         );
 
         // Add shop button
-        this.shopButton = this.add.text(10, 60, '🛍️ Shop', {
+        this.shopButton = this.add.text(this.scale.width - 150, 50, '🛍️ Shop', {
             fontSize: '24px',
             backgroundColor: '#000000',
             color: '#000000',
@@ -205,8 +199,9 @@ export default class Game extends Scene {
         this.bgMusic.play()
 
         // Add music controls
-        this.musicButton = this.add.text(10, 100, '🔊', {
+        this.musicButton = this.add.text(this.scale.width - 50, 50, '🔊', {
             fontSize: '24px',
+            fontFamily: 'Tahoma',
             backgroundColor: '#000000',
             padding: { x: 10, y: 5 },
             alpha: 0.8
@@ -324,19 +319,19 @@ export default class Game extends Scene {
         if (this.coinCounter) {
             this.coinCounter
                 .setScale(scaleFactor)
-                .setPosition(width - (30 * scaleFactor), 30 * scaleFactor)
+                .setPosition(50 - (20 * scaleFactor), 20 * scaleFactor)
         }
 
         if (this.shopButton) {
             this.shopButton
                 .setScale(scaleFactor)
-                .setPosition(10 * scaleFactor, 60 * scaleFactor)
+                .setPosition(width - 150 * scaleFactor, 50 * scaleFactor)
         }
 
         if (this.musicButton) {
             this.musicButton
                 .setScale(scaleFactor)
-                .setPosition(10 * scaleFactor, 100 * scaleFactor)
+                .setPosition(width - 50 * scaleFactor, 50 * scaleFactor)
         }
 
         // Update mobile controls if they exist
@@ -378,8 +373,7 @@ export default class Game extends Scene {
 
     starCollect(player, star) {
         star.destroy(false)
-        this.coinScore++
-        this.coinCounter.setText(`${this.coinScore}`)
+        this.updateScore(this.coinScore + 1)
     }
     
     levelComplete() {
@@ -430,55 +424,6 @@ export default class Game extends Scene {
             }
         })
     }
-
-    createMobileControls() {
-        // Create a container for controls
-        this.controls = {
-            left: null,
-            right: null,
-            jump: null
-        }
-
-        const buttonStyle = {
-            fontSize: '32px',
-            backgroundColor: '#000000',
-            color: '#ffffff',
-            padding: { x: 20, y: 20 },
-            alpha: 0.7
-        }
-
-        // Create left button
-        this.controls.left = this.add.text(50, this.scale.height - 100, '<', buttonStyle)
-            .setInteractive()
-            .setScrollFactor(0)
-            .setDepth(100)
-
-        // Create right button
-        this.controls.right = this.add.text(150, this.scale.height - 100, '>', buttonStyle)
-            .setInteractive()
-            .setScrollFactor(0)
-            .setDepth(100)
-
-        // Create jump button
-        this.controls.jump = this.add.text(this.scale.width - 100, this.scale.height - 100, '↑', buttonStyle)
-            .setInteractive()
-            .setScrollFactor(0)
-            .setDepth(100)
-
-        // Add touch events
-        this.controls.left.on('pointerdown', () => { this.keys.left.isDown = true })
-        this.controls.left.on('pointerup', () => { this.keys.left.isDown = false })
-        this.controls.left.on('pointerout', () => { this.keys.left.isDown = false })
-
-        this.controls.right.on('pointerdown', () => { this.keys.right.isDown = true })
-        this.controls.right.on('pointerup', () => { this.keys.right.isDown = false })
-        this.controls.right.on('pointerout', () => { this.keys.right.isDown = false })
-
-        this.controls.jump.on('pointerdown', () => { this.keys.space.isDown = true })
-        this.controls.jump.on('pointerup', () => { this.keys.space.isDown = false })
-        this.controls.jump.on('pointerout', () => { this.keys.space.isDown = false })
-    }
-
     createShopUI() {
         // Destroy existing shop UI if it exists
         if (this.shopUI) {
@@ -567,8 +512,7 @@ export default class Game extends Scene {
             this.player.applyCosmetics()
         } else if (this.player.customization.unlockItem(item.id, this.coinScore)) {
             console.log('Purchasing:', item.name)
-            this.coinScore -= item.price
-            this.coinCounter.setText(`${this.coinScore}`)
+            this.updateScore(this.coinScore - item.price)
             this.player.customization.equipItem(item.id)
             this.player.applyCosmetics()
             
@@ -590,5 +534,12 @@ export default class Game extends Scene {
             this.musicButton.setText('🔈')
             localStorage.setItem('musicEnabled', 'false')
         }
+    }
+
+    // New method to update score and persist it
+    updateScore(newScore) {
+        this.coinScore = newScore
+        this.coinCounter.setText(`${this.coinScore}`)
+        localStorage.setItem('coinScore', this.coinScore.toString())
     }
 }
