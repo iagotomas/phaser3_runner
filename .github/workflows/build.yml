@@ -1,0 +1,71 @@
+name: Build and Test
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        node-version: [18.x]
+
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        fetch-depth: 0  # Fetch all history for git hash
+
+    - name: Use Node.js ${{ matrix.node-version }}
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ matrix.node-version }}
+        cache: 'yarn'
+
+    - name: Install Yarn
+      run: npm install -g yarn
+
+    - name: Install dependencies
+      run: yarn install --frozen-lockfile
+
+    - name: Build
+      run: yarn run build
+      env:
+        CI: true
+
+    - name: Check build artifacts
+      run: |
+        if [ ! -d "build" ]; then
+          echo "Build directory not found!"
+          exit 1
+        fi
+        if [ ! -f "build/index.html" ]; then
+          echo "index.html not found in build!"
+          exit 1
+        fi
+        if [ ! -f "build/manifest.json" ]; then
+          echo "manifest.json not found in build!"
+          exit 1
+        fi
+
+    - name: Upload build artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: build-artifacts
+        path: build/
+        retention-days: 7
+
+    - name: Cache dependencies
+      uses: actions/cache@v4
+      with:
+        path: |
+          .yarn/cache
+          .yarn/unplugged
+          .yarn/build-state.yml
+          .yarn/install-state.gz
+        key: ${{ runner.os }}-yarn-${{ hashFiles('yarn.lock') }}
+        restore-keys: |
+          ${{ runner.os }}-yarn- 
