@@ -12,7 +12,7 @@ jobs:
 
     strategy:
       matrix:
-        node-version: [18.x]
+        node-version: [18.x, 20.x]
 
     steps:
     - uses: actions/checkout@v4
@@ -24,7 +24,11 @@ jobs:
       with:
         node-version: ${{ matrix.node-version }}
         cache: 'yarn'
-
+    - name: Get yarn cache directory path
+      id: yarn-cache-dir-path
+      run: |
+        echo "::set-output name=dir::$(yarn cache dir)"
+        echo "::set-output name=version::$(yarn -v)"
     - name: Install Yarn
       run: npm install -g yarn
 
@@ -65,8 +69,9 @@ jobs:
           .yarn/cache
           .yarn/unplugged
           .yarn/build-state.yml
-          .yarn/install-state.gz
-          node_modules
+          .yarn/install-state.gz          
+          **/node_modules
+          ${{ steps.yarn-cache-dir-path.outputs.dir }}
         key: ${{ runner.os }}-yarn-${{ hashFiles('yarn.lock') }}
         restore-keys: |
           ${{ runner.os }}-yarn- 
