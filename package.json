@@ -1,7 +1,7 @@
 {
-  "name": "phaser_tutorial",
+  "name": "susanasland",
   "version": "1.0.0",
-  "description": "",
+  "description": "Susana's Land",
   "private": true,
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
