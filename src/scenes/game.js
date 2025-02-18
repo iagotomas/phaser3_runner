@@ -12,6 +12,7 @@ import CloudManager from '../objects/cloud'
     100: UI elements (counters, buttons)
     1000: Shop UI and overlays
  */
+const GAME_TOTAL_WIDTH_SCREENS_MULTIPLIER = 100
 export default class Game extends Scene { 
     constructor() {
         super('game')
@@ -85,7 +86,7 @@ export default class Game extends Scene {
         this.physics.add.collider(this.player, this.platformGroup)
 
         // Set up camera
-        this.cameras.main.setBounds(0, 0, this.game.config.width * 3, this.game.config.height)
+        this.cameras.main.setBounds(0, 0, this.game.config.width * GAME_TOTAL_WIDTH_SCREENS_MULTIPLIER, this.game.config.height)
         this.cameras.main.startFollow(this.player)
 
         // Create cloud manager with proper depth
@@ -149,7 +150,7 @@ export default class Game extends Scene {
 
         // Level-specific setup
         const endZone = this.add.rectangle(
-            this.game.config.width * 3 - 50, 
+            this.game.config.width * GAME_TOTAL_WIDTH_SCREENS_MULTIPLIER - 50, 
             this.game.config.height / 2, 
             50, 
             this.game.config.height, 
@@ -270,7 +271,30 @@ export default class Game extends Scene {
                     this.targetMarker.setAlpha(1)
                 }
             })
-        })
+        });
+
+        // Add pointer move handler for continuous movement
+        this.input.on('pointermove', (pointer) => {
+            if (pointer.isDown && !this.shopUI?.visible) {
+                // Convert screen coordinates to world coordinates
+                const worldPoint = this.cameras.main.getWorldPoint(pointer.x, pointer.y)
+                
+                // Update move target
+                this.moveTarget = worldPoint.x
+                
+                // Update target marker
+                this.targetMarker.setPosition(worldPoint.x, worldPoint.y)
+                this.targetMarker.setVisible(true)
+                this.targetMarker.setAlpha(1)
+            }
+        });
+
+        // Add pointer up handler
+        this.input.on('pointerup', () => {
+            // Stop movement when pointer is released
+            this.moveTarget = null;
+            this.targetMarker.setVisible(false);
+        });
 
         // Jump button handlers
         jumpButton
@@ -355,13 +379,14 @@ export default class Game extends Scene {
         // Update shop UI if it exists
         if (this.shopUI && this.shopUI.visible) {
             this.createShopUI() // Recreate shop UI with new dimensions
+            this.shopUI.setVisible(true)
         }
 
         // Update world bounds
-        this.physics.world.setBounds(0, 0, width * 3, height)
+        this.physics.world.setBounds(0, 0, width * GAME_TOTAL_WIDTH_SCREENS_MULTIPLIER, height)
         
         // Update camera bounds
-        this.cameras.main.setBounds(0, 0, width * 3, height)
+        this.cameras.main.setBounds(0, 0, width * GAME_TOTAL_WIDTH_SCREENS_MULTIPLIER, height)
 
         // Update backgrounds
         this.backgrounds.forEach(bg => {
@@ -427,40 +452,41 @@ export default class Game extends Scene {
     createShopUI() {
         // Destroy existing shop UI if it exists
         if (this.shopUI) {
-            this.shopUI.removeAll(true) // Remove and destroy all children
+            this.shopUI.removeAll(true)
             this.shopUI.destroy()
         }
         
-        const width = this.scale.width
-        const height = this.scale.height
+        // Create a new Scene specifically for the shop UI
+        this.shopUI = this.add.container()
         
-        this.shopUI = this.add.container(0, 0)
-            .setScrollFactor(0)
-            .setVisible(false)
-            .setDepth(1000)
+        // Get screen dimensions (not world dimensions)
+        const width = this.cameras.main.width
+        const height = this.cameras.main.height
         
         // Background with interaction
         const bg = this.add.rectangle(width/2, height/2, width, height, 0x000000, 0.8)
-        bg.setInteractive()
+            .setInteractive()
+            .setScrollFactor(0)
         this.shopUI.add(bg)
         
-        // Close button
+        // Close button - position relative to camera viewport
         const closeBtn = this.add.text(width - 60, 20, '❌', { 
             fontSize: '32px',
             padding: { x: 10, y: 10 }
         })
+        .setScrollFactor(0)
         .setInteractive({ useHandCursor: true })
-        .on('pointerdown', () => this.closeShop(), this)
-        .setDepth(1001)
+        .on('pointerdown', () => this.closeShop())
         this.shopUI.add(closeBtn)
         
         // Create item buttons
         let y = 100
         this.player.customization.unlockables.hats.forEach(item => {
-            // Create button background
+            // Create individual interactive button (not container)
             const buttonBg = this.add.rectangle(width/2, y, 300, 60, 0x444444)
+                .setScrollFactor(0)
                 .setInteractive({ useHandCursor: true })
-                .on('pointerdown', () => this.purchaseItem(item), this)
+                .on('pointerdown', () => this.purchaseItem(item))
                 .on('pointerover', () => buttonBg.setFillStyle(0x666666))
                 .on('pointerout', () => buttonBg.setFillStyle(0x444444))
             
@@ -472,22 +498,27 @@ export default class Game extends Scene {
                     align: 'center',
                     color: '#ffffff'
                 }
-            ).setOrigin(0.5)
+            )
+            .setScrollFactor(0)
+            .setOrigin(0.5)
             
+            // Add elements directly to shop UI (not in a container)
             this.shopUI.add([buttonBg, text])
+            
             y += 80
         })
 
-        // Scale shop UI elements
-        const scaleFactor = Math.min(
-            this.scale.width / 1280,
-            this.scale.height / 720
-        )
+        // Set all UI elements to ignore camera scroll and ensure proper depth
+        this.shopUI.setDepth(1000)
+        this.shopUI.setVisible(false)
         
-        // Apply scaling to shop elements
-        this.shopUI.list.forEach(element => {
-            if (element.setScale) {
-                element.setScale(scaleFactor)
+        // Make sure all children ignore scroll and are interactive
+        this.shopUI.each(child => {
+            child.setScrollFactor(0)
+            // Refresh input handling for interactive elements
+            if (child.input) {
+                child.removeInteractive()
+                child.setInteractive()
             }
         })
     }
@@ -496,12 +527,30 @@ export default class Game extends Scene {
         if (!this.shopUI) {
             this.createShopUI()
         }
+        
+        // Ensure UI is positioned correctly relative to camera
         this.shopUI.setVisible(true)
+        
+        // Disable game input while shop is open
+        this.input.keyboard.enabled = false
+        if (this.moveTarget) {
+            this.moveTarget = null
+            this.player.setVelocityX(0)
+        }
+
+        // Pause physics while shop is open
+        this.physics.pause()
     }
 
     closeShop() {
         if (this.shopUI) {
             this.shopUI.setVisible(false)
+            
+            // Re-enable game input when shop is closed
+            this.input.keyboard.enabled = true
+            
+            // Resume physics
+            this.physics.resume()
         }
     }
 
@@ -516,7 +565,7 @@ export default class Game extends Scene {
             this.player.customization.equipItem(item.id)
             this.player.applyCosmetics()
             
-            // Properly recreate the shop UI
+            // Refresh the shop UI to update button states
             this.createShopUI()
             this.shopUI.setVisible(true)
         } else {

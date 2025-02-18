@@ -132,6 +132,7 @@ export default class Preload extends Scene {
         this.load.image('hat1', 'assets/cosmetics/party-hat.png')
         this.load.image('hat2', 'assets/cosmetics/crown.png')
         this.load.image('hat3', 'assets/cosmetics/cowboy.png')
+        this.load.image('hat4', 'assets/cosmetics/princess_crown.png')
         this.load.image('star', 'assets/particles/star.png')
 
         // Load background music
