@@ -2,3 +2,5 @@ node_modules
 assets/original
 build
 doc
+.vscode/
+
