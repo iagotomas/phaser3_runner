@@ -24,7 +24,7 @@ const formatVersion = () => {
         parts.length = 3;
         
         // Add GitHub run attempt as build number
-        const runAttempt = process.env.GITHUB_RUN_ATTEMPT || '0';
+        const runAttempt = process.env.GITHUB_RUN_ID || '0';
         parts.push(runAttempt);
         
         // Ensure all parts are valid numbers
