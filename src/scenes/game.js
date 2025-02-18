@@ -75,26 +75,7 @@ export default class Game extends Scene {
             groundSegment.setImmovable(true)
             groundSegment.setDepth(10)
             
-            
-            
-            console.log('Platform segment created:', {
-                x,
-                y: groundY,
-                width: segmentWidth,
-                height: 64,
-                texture: groundSegment.texture.key,
-                visible: groundSegment.visible,
-                active: groundSegment.active,
-                depth: groundSegment.depth
-            })
         }
-
-        // Log platform group info
-        console.log('Platform group:', {
-            count: this.platformGroup.getChildren().length,
-            visible: this.platformGroup.visible,
-            active: this.platformGroup.active
-        })
 
         // Create player with depth above platforms
         this.player = new Player(this, 60, groundY - 480, 'ponygirl')
@@ -244,9 +225,9 @@ export default class Game extends Scene {
 
         // Create target marker (initially invisible)
         this.targetMarker = this.add.container(0, 0)
-        const marker = this.add.circle(0, 0, 10, 0x00ff00, 0.5)
-        const arrow = this.add.triangle(0, -20, 0, -10, 10, 0, -10, 0, 0x00ff00, 0.5)
-        this.targetMarker.add([marker, arrow])
+        const marker = this.add.circle(0, 0, 7, 0xde1dba, 0.5)
+        //const arrow = this.add.triangle(0, -20, 0, -10, 10, 0, -10, 0, 0xde1dba, 0.5)
+        this.targetMarker.add([marker])//, arrow])
         this.targetMarker.setVisible(false)
         this.targetMarker.setDepth(100)
 
@@ -313,7 +294,6 @@ export default class Game extends Scene {
         const width = gameSize.width
         const height = gameSize.height
         
-        console.log('Resize event:', { width, height })
         
         // Update camera
         this.cameras.main.setViewport(0, 0, width, height)
@@ -324,7 +304,6 @@ export default class Game extends Scene {
         // Update ground platforms if they exist
         if (this.platformGroup) {
             const groundY = height - 64
-            console.log('Updating platforms:', { groundY, width })
             
             this.platformGroup.getChildren().forEach((platform, index) => {
                 const x = index * width
@@ -333,17 +312,6 @@ export default class Game extends Scene {
                 platform.setDisplaySize(width, 64)
                 platform.refreshBody()
                 platform.setDepth(10)
-                //platform.setTint(0x00ff00)
-                //platform.setAlpha(0.8)
-                
-                console.log('Platform updated:', {
-                    index,
-                    x,
-                    y: groundY,
-                    width,
-                    visible: platform.visible,
-                    active: platform.active
-                })
             })
         }
 
@@ -410,7 +378,6 @@ export default class Game extends Scene {
 
     starCollect(player, star) {
         star.destroy(false)
-        console.log("collected star")
         this.coinScore++
         this.coinCounter.setText(`${this.coinScore}`)
     }

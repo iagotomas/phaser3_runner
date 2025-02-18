@@ -14,13 +14,16 @@ export default class CloudManager {
             ...config
         }
 
-        this.cloudGroup = scene.physics.add.staticGroup()
+        // Create cloud group
+        this.cloudGroup = this.scene.add.group()
         this.ballGroup = scene.physics.add.group({
             maxSize: 15,
             runChildUpdate: true,
+            collideWorldBounds: false,
             bounceX: 0.6,
             bounceY: 0.6,
-            dragX: 50
+            dragX: 50,
+            dragY: 0
         })
         this.initialize()
     }
@@ -42,37 +45,61 @@ export default class CloudManager {
     }
 
     spawnCloud() {
-        const clouds = ['cloud_aaa', 'cloud_aab', 'cloud_aac', 'cloud_aad', 'cloud_aae']//, 'cloud_big_aaa']
+        const clouds = ['cloud_aaa', 'cloud_aab', 'cloud_aac', 'cloud_aad', 'cloud_aae']
         const random = Math.floor(Math.random() * clouds.length);
+        
+        // Calculate spawn position relative to current camera view
+        const spawnX = this.scene.cameras.main.scrollX + this.scene.game.config.width + 200
+        const spawnY = Phaser.Math.Between(40, 250)
+        
         const cloud = this.cloudGroup.create(
-            this.scene.cameras.main.scrollX + this.scene.game.config.width + 200, 
-            Phaser.Math.Between(40, 150), 
+            spawnX,
+            spawnY, 
             'ponygirl',
             clouds[random]
-            
         )
         cloud.setScale(Phaser.Math.FloatBetween(0.9, 1.2))
         cloud.setDepth(this.config.depth)
         cloud.cloudSpeed = Phaser.Math.FloatBetween(2, 4)
+        cloud.setScrollFactor(1)
         
-        this.setupCloudDropping(cloud)
+        // Store the timer reference on the cloud object
+        cloud.dropTimer = this.setupCloudDropping(cloud)
+        
         return cloud
     }
 
     setupCloudDropping(cloud) {
-        const dropTimer = this.scene.time.addEvent({
+        console.log('Setting up drop timer for cloud at:', cloud.x);
+        return this.scene.time.addEvent({
             delay: Phaser.Math.Between(this.config.minDropDelay, this.config.maxDropDelay),
-            callback: () => this.dropBall(cloud),
+            callback: () => {
+                console.log('Timer triggered for cloud at:', cloud.x);
+                this.dropBall(cloud);
+            },
             callbackScope: this,
             loop: true
-        })
+        });
     }
 
     dropBall(cloud) {
+        // Only drop balls if cloud is within camera view plus some margin
+        const cameraX = this.scene.cameras.main.scrollX;
+        const cameraWidth = this.scene.game.config.width;
+        
+        // Check if cloud is within visible range
+        if (cloud.x > cameraX + cameraWidth || cloud.x < cameraX) {
+            return; // Don't drop balls if cloud is off screen
+        }
+
         const colors = ['', '_blue', '_orange', '_red', '_green', '_blue']
         const random = Math.floor(Math.random()*colors.length)
         const ball = this.ballGroup.get(cloud.x, cloud.y, 'ponygirl', 'tennis_ball' + colors[random])
+        
         if (ball) {
+            // Set scroll factor to match the world (1 means it moves with the world)
+            ball.setScrollFactor(1)
+            
             ball.isSpecial = Math.random() < 0.2
             ball.setActive(true)
             ball.setVisible(true)
@@ -85,11 +112,9 @@ export default class CloudManager {
             ball.isResting = false
             ball.groundTimer = null
             
-            // Random angle drop between -30 and 30 degrees
-            const angle = Phaser.Math.Between(-30, 30)
+            const angle = Phaser.Math.Between(-15, 15)
             const speed = -200
             
-            // Convert angle to velocity
             const velocity = this.scene.physics.velocityFromAngle(angle, speed)
             ball.body.setVelocity(velocity.x, velocity.y)
             ball.body.setGravityY(50)
@@ -129,25 +154,16 @@ export default class CloudManager {
             ball.body.setVelocity(0, 0)
             ball.body.setAngularVelocity(0)
             
+            // Clear any existing ground timer
+            if (ball.groundTimer) {
+                ball.groundTimer.remove()
+            }
+            
             // Start ground timer
             ball.groundTimer = this.scene.time.delayedCall(
                 this.config.groundDelay,
                 () => {
-                    // Fade out effect
-                    this.scene.tweens.add({
-                        targets: ball,
-                        alpha: 0,
-                        duration: 500,
-                        onComplete: () => {
-                            this.ballGroup.killAndHide(ball)
-                            if(ball) {
-                                ball.body.enable = false
-                                ball.setActive(false)
-                                ball.setVisible(false)
-                                ball.alpha = 1 // Reset alpha for reuse
-                            }
-                        }
-                    })
+                    this.cleanupBall(ball)
                 },
                 null,
                 this
@@ -162,6 +178,29 @@ export default class CloudManager {
         }
     }
 
+    cleanupBall(ball) {
+        // Stop any existing tweens on the ball
+        this.scene.tweens.killTweensOf(ball)
+        
+        // Fade out effect
+        this.scene.tweens.add({
+            targets: ball,
+            alpha: 0,
+            duration: 500,
+            onComplete: () => {
+                this.ballGroup.killAndHide(ball)
+                if (ball) {
+                    ball.body.enable = false
+                    ball.setActive(false)
+                    ball.setVisible(false)
+                    ball.alpha = 1 // Reset alpha for reuse
+                    // Clear the ground timer reference
+                    ball.groundTimer = null
+                }
+            }
+        })
+    }
+
     handleBallCollection(player, ball) {
         ball.destroy();
         // Add 3 points for special balls, 1 for regular
@@ -173,21 +212,40 @@ export default class CloudManager {
     }
 
     update() {
-        // Wrap clouds horizontally
-         // Move clouds horizontally
-         this.cloudGroup.children.entries.forEach(cloud => {
+        const cameraX = this.scene.cameras.main.scrollX;
+        
+        // Debug cloud count
+        console.log('Active clouds:', this.cloudGroup.children.entries.length);
+        
+        // Move clouds horizontally
+        this.cloudGroup.children.entries.forEach(cloud => {
             cloud.x -= cloud.cloudSpeed
+
+            // Ensure cloud has a drop timer
+            if (!cloud.dropTimer || !cloud.dropTimer.active) {
+                console.log('Cloud missing timer or timer inactive - creating new timer');
+                cloud.dropTimer = this.setupCloudDropping(cloud);
+            }
+
+            // Debug cloud position
+            console.log('Cloud at:', cloud.x, 'with timer:', !!cloud.dropTimer);
 
             // Wrap clouds horizontally
             if (cloud.x < this.scene.cameras.main.scrollX - 300) {
-                
-                cloud.destroy()
-                this.spawnCloud()
+                console.log('Destroying cloud at:', cloud.x);
+                // Destroy the timer before destroying the cloud
+                if (cloud.dropTimer) {
+                    cloud.dropTimer.destroy();
+                    cloud.dropTimer = null;
+                }
+                cloud.destroy();
+                const newCloud = this.spawnCloud();
+                console.log('Spawned new cloud at:', newCloud.x);
             }
         })
         // Update ball physics
         this.ballGroup.children.entries.forEach(ball => {
-            if (ball.active) {
+            if (ball) {
                 // Check if ball is moving too slow and should rest
                 if (!ball.isResting && 
                     Math.abs(ball.body.velocity.x) < 5 && 
@@ -197,11 +255,8 @@ export default class CloudManager {
                     ball.body.setAngularVelocity(0)
                 }
                 else if(ball.x < this.scene.cameras.main.scrollX - 50) {
-                    this.ballGroup.killAndHide(ball)
-                    ball.body.enable = false
-                    ball.setActive(false)
-                    ball.setVisible(false)
-                    ball.alpha = 1 // Reset alpha for reuse
+                    // Use the cleanup method for consistency
+                    this.cleanupBall(ball)
                 }
             }
         })

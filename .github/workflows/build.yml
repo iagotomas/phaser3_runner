@@ -102,7 +102,7 @@ jobs:
         run: |
           aws s3 sync build/ s3://${{ vars.S3_BUCKET }} \
             --delete \
-            --cache-control "max-age=300,public" \
+            --cache-control "max-age=3600,public" \
             --exclude "*.html" \
             --exclude "manifest.json"
 
