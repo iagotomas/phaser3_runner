@@ -5,6 +5,7 @@ on:
     branches: [ master ]
   pull_request:
     branches: [ master ]
+  workflow_dispatch:  
 
 jobs:
   build:
@@ -74,4 +75,42 @@ jobs:
           ${{ steps.yarn-cache-dir-path.outputs.dir }}
         key: ${{ runner.os }}-yarn-${{ hashFiles('yarn.lock') }}
         restore-keys: |
-          ${{ runner.os }}-yarn- 
+          ${{ runner.os }}-yarn-
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment: production
+    # Manual trigger using workflow_dispatch
+    if: github.event_name == 'workflow_dispatch'
+    
+    steps:
+      - name: Download build artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: susanasland-release-${{ github.ref_name }}
+          path: build
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ vars.AWS_REGION }}
+
+      - name: Deploy to S3
+        run: |
+          aws s3 sync build/ s3://${{ vars.S3_BUCKET }} \
+            --delete \
+            --cache-control "max-age=300,public" \
+            --exclude "*.html" \
+            --exclude "manifest.json"
+
+      - name: Deploy HTML and manifest with no-cache
+        run: |
+          aws s3 sync build/ s3://${{ vars.S3_BUCKET }} \
+            --exclude "*" \
+            --include "*.html" \
+            --include "manifest.json" \
+            --cache-control "no-cache,no-store,must-revalidate" \
+            --content-type "text/html" 
