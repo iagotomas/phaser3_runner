@@ -6,6 +6,13 @@ const WebpackDevServer = require('webpack-dev-server');
 const HtmlWebpackPlugin = require('html-webpack-plugin');
 const common = require('./webpack.config.js');
 const version = require('./package.json').version;
+const CopyWebpackPlugin = require('copy-webpack-plugin');
+
+const copyFileList = { patterns: [
+  {from: 'dist/service-worker.js', to: 'service-worker.js'}, 
+  {from: 'dist/manifest.json', to: 'manifest.json'}
+] 
+};
 
 const portfinder = require('portfinder');
 portfinder.basePort = 4000;
@@ -38,6 +45,7 @@ portfinder.getPort(function(err, finalPort) {
         template: 'dist/index.html',
         inject: 'body',
       }),
+      new CopyWebpackPlugin(copyFileList)
     ],
   }));
   const server = new WebpackDevServer(compiler, {

@@ -9,7 +9,12 @@ const CopyWebpackPlugin = require('copy-webpack-plugin');
 let common = require('./webpack.config.js');
 const version = require('./package.json').version;
 
-const copyFileList = { patterns: [{from: 'assets', to: 'assets'}] };
+const copyFileList = { patterns: [
+  {from: 'assets', to: 'assets'}, 
+  {from: 'dist/service-worker.js', to: 'service-worker.js'}, 
+  {from: 'dist/manifest.json', to: 'manifest.json'}
+] 
+};
 
 const config = merge(common, {
   mode: 'production',
@@ -25,7 +30,7 @@ const config = merge(common, {
     }),
     new CleanWebpackPlugin(),
     new HtmlWebpackPlugin({
-      template: 'dist/index.html',
+      template: 'dist/index.html',      
       inject: 'body',
     }),
     new CopyWebpackPlugin(copyFileList),

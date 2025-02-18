@@ -8,9 +8,12 @@ var httpPort = 8080;
 var staticBasePath = './build';
 
 var staticServe = function(req, res) {
-    console.log("Request [" + req.url + "]")
+    console.log("Request [" + req.url + "]") 
+    // Make sure we're serving index.html for root path
+    let filePath = req.url === '/' ? '/index.html' : req.url
+    
     var resolvedBase = path.resolve(staticBasePath);
-    var safeSuffix = path.normalize(req.url).replace(/^(\.\.[\/\\])+/, '');
+    var safeSuffix = path.normalize(filePath).replace(/^(\.\.[\/\\])+/, '');
     var fileLoc = path.join(resolvedBase, safeSuffix);
     
     fs.readFile(fileLoc, function(err, data) {

@@ -3,28 +3,35 @@ import Preload from './scenes/preload'
 import Game from './scenes/game'
 import Phaser from 'phaser'
 
+// Reference resolution (design size)
+const GAME_WIDTH = 1280
+const GAME_HEIGHT = 820
+
 // Get initial window dimensions
-const maxHeight = 820
 const width = window.innerWidth
-const height = window.innerHeight > maxHeight ? maxHeight : window.innerHeight
+const height = window.innerHeight
+
+// Calculate zoom factor
+const zoom = Math.min(width / GAME_WIDTH, height / GAME_HEIGHT)
 
 export default {
     type: Phaser.AUTO,
     scale: {
         mode: Phaser.Scale.FIT,
         parent: 'game',
-        width: width,        // Use actual pixels instead of percentage
-        height: height,      // Use actual pixels instead of percentage
+        width: GAME_WIDTH,
+        height: GAME_HEIGHT,
         autoCenter: Phaser.Scale.CENTER_BOTH,
+        orientation: Phaser.Scale.LANDSCAPE,
         min: {
-            width: 320,
-            height: 240
+            width: 480,
+            height: 270
         },
         max: {
-            width: 1600,
-            height: maxHeight
+            width: 1920,
+            height: 1080
         },
-        zoom: 1
+        zoom: zoom
     },
     pixelArt: true,
     backgroundColor: 'rgb(0, 0, 0)',
@@ -44,6 +51,15 @@ export default {
         powerPreference: 'high-performance',
         antialias: false,
         pixelArt: true
+    },
+    callbacks: {
+        preBoot: function (game) {
+            if (screen.orientation && screen.orientation.lock) {
+                screen.orientation.lock('landscape').catch(() => {
+                    console.log('Screen orientation lock failed')
+                })
+            }
+        }
     },
     scene: [ Boot, Preload, Game ]
 }

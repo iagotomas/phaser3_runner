@@ -17,13 +17,20 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
         this.scene = scene
         scene.add.existing(this)
         scene.physics.add.existing(this)
-        //this.displayHeight = 320
-        //this.input.hitArea = new Phaser.Geom.Rectangle(0, 0, 320, 320)
-        this.setScale(0.6, 0.6)
-        this.setBodySize(180, 180, false)
-        this.setSizeToFrame(true)
-        //this.setBodySize(170, 170)
-        //this.setDisplaySize(120, 120)
+        // Set default size (320x320)
+        const targetWidth = 320
+        const targetHeight = 320
+        
+        // Calculate scale based on texture size
+        /*const scaleX = targetWidth / this.body.width
+        const scaleY = targetHeight / this.body.height
+        this.setScale(1, 1)
+        console.log(`Player width: ${this.body.width}, height: ${this.body.height}, scaleX: ${scaleX}, scaleY: ${scaleY}, targetWidth: ${targetWidth}, targetHeight: ${targetHeight}`)
+*/
+        // Adjust physics body size (make it smaller than visual size)
+        this.body.setSize(targetWidth * 0.6, targetHeight * 0.5)
+        this.body.setOffset(targetWidth * 0.05, targetHeight * 0.15)
+
         const anims = scene.anims
         const key = texture
         anims.create({
@@ -51,8 +58,8 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
             repeat: -1
         }) 
         //this.setCollideWorldBounds(true)   
-        this.setBounce(0.2)
-        this.setGravityY(200)
+        this.setBounce(0.5)
+        this.setGravityY(300)
         this.direction = 'idle'
 
         this.on('animationcomplete', (anim, frame) => {
@@ -74,6 +81,9 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
         this.hat = null
         this.trail = null
         
+        // Store player depth for reference
+        this.baseDepth = this.depth
+        
         // Apply equipped items
         this.applyCosmetics()
     }
@@ -90,7 +100,8 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
                 this.y + hatData.offset.y, 
                 hatData.sprite
             )
-            this.hat.setDepth(this.depth + 1)
+            this.hat.setRotation(hatData.rotation)
+            this.hat.setDepth(this.baseDepth + 1)
         }
         
         // Apply trail if equipped
@@ -99,10 +110,10 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
             if (this.trail) this.trail.destroy()
             
             // Create new particle effect using Phaser 3.60+ syntax
-            this.trail = this.scene.add.particles(0, 0, trailData.particle, {
+            this.trail = this.scene.add.particles(-50, 50, trailData.particle, {
                 follow: this,
                 frequency: 50,
-                scale: { start: 0.5, end: 0 },
+                scale: { start: 1.5, end: 0 },
                 alpha: { start: 0.6, end: 0 },
                 lifespan: 1000,
                 speed: { min: 0, max: 20 },
@@ -110,8 +121,22 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
                 blendMode: 'ADD'
             })
             
-            this.trail.setDepth(this.depth - 1) // Make sure trail appears behind player
+            this.trail.setDepth(this.baseDepth - 1) // Make sure trail appears behind player
         }
+    }
+
+    setDepth(value) {
+        super.setDepth(value)
+        this.baseDepth = value
+        
+        // Update cosmetics depths
+        if (this.hat) {
+            this.hat.setDepth(this.baseDepth + 1)
+        }
+        if (this.trail) {
+            this.trail.setDepth(this.baseDepth - 1)
+        }
+        return this
     }
 
     preUpdate(time, delta) {
@@ -125,6 +150,8 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
                 this.y + hatData.offset.y
             )
             this.hat.setFlipX(this.flipX)
+            // Ensure hat depth stays correct
+            this.hat.setDepth(this.baseDepth + 1)
         }
     }
 
@@ -135,128 +162,170 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
 
 
 export class MoveState extends State {
-  /**
-   * 
-   * @param {Scene} scene 
-   * @param {Phaser.Physics.Arcade.Sprite} sprite 
-   */
     enter(scene, sprite) {
-      sprite.setVelocity(0);
-      sprite.anims.play('idle');
-    } 
+        sprite.anims.play('walk')
+    }
+
+    execute(scene, sprite) {
+        const {space} = scene.keys
+        
+        // Check for jump
+        if (space.isDown) {
+            this.stateMachine.transition('jump')
+            return
+        }
+        
+        // Point and click movement
+        if (scene.moveTarget) {
+            const distanceToTarget = scene.moveTarget - sprite.x
+            const STOP_THRESHOLD = 10
+            
+            if (Math.abs(distanceToTarget) > STOP_THRESHOLD) {
+                // Move towards target
+                if (distanceToTarget > 0) {
+                    sprite.setVelocityX(300)
+                    sprite.flipX = false
+                } else {
+                    sprite.setVelocityX(-300)
+                    sprite.flipX = true
+                }
+                sprite.direction = 'walk'
+            } else {
+                // Stop at target
+                sprite.setVelocityX(0)
+                sprite.direction = 'idle'
+                scene.moveTarget = null
+                this.stateMachine.transition('idle')
+            }
+        } else {
+            // No target, stop moving
+            sprite.setVelocityX(0)
+            sprite.direction = 'idle'
+            this.stateMachine.transition('idle')
+        }
+        
+        sprite.anims.play(`${sprite.direction}`, true)
+    }
+}
+
+export class IdleState extends State {
+    enter(scene, sprite) {
+        sprite.setVelocityX(0)
+        sprite.anims.play('idle')
+    }
+
+    execute(scene, sprite) {
+        const {space} = scene.keys
+        
+        // Check for jump
+        if (space.isDown) {
+            this.stateMachine.transition('jump')
+            return
+        }
+        
+        // Check for movement target
+        if (scene.moveTarget) {
+            const distanceToTarget = scene.moveTarget - sprite.x
+            if (Math.abs(distanceToTarget) > 10) {
+                this.stateMachine.transition('move')
+                return
+            }
+        }
+    }
+}
+
+export class JumpState extends State {
     /**
      * 
      * @param {Scene} scene 
      * @param {Phaser.Physics.Arcade.Sprite} sprite 
      */
-     execute(scene, sprite) {
-       const {left, right, up, down, space} = scene.keys
-       
-       // Simplified jump check
-       if (space.isDown) {
-           this.stateMachine.transition('jump')
-           return
-       }
-       
-       sprite.setVelocity(0)
-       if (left.isDown) {
-         sprite.setVelocityX(-300)
-         sprite.direction = 'walk'
-         sprite.flipX = true
-       } else if (right.isDown) {
-         sprite.setVelocityX(300)
-         sprite.direction = 'walk'
-         sprite.flipX = false
-       }
-       
-       sprite.anims.play(`${sprite.direction}`, true)
-     }
-   }
- 
-  export class IdleState extends State {
-   /**
-    * 
-    * @param {Scene} scene 
-    * @param {Phaser.Physics.Arcade.Sprite} sprite 
-    */
      enter(scene, sprite) {
-       sprite.setVelocity(0);
-       sprite.anims.play('idle');
-     }
-     /**
-      * 
-      * @param {Scene} scene 
-      * @param {Phaser.Physics.Arcade.Sprite} sprite 
-      */
-     execute(scene, sprite) {
-       const {left, right, up, down, space} = scene.keys;
-       
-       // Simplified jump check
-       if (space.isDown) {
-           this.stateMachine.transition('jump');
-           return;
-       }
-       
-       // Transition to move if pressing a movement key
-       if (left.isDown || right.isDown || up.isDown ) {
-           this.stateMachine.transition('move');
-           return;
-       }
-     }
-   }
- 
-   export class JumpState extends State {
-    /**
-     * 
-     * @param {Scene} scene 
-     * @param {Phaser.Physics.Arcade.Sprite} sprite 
-     */
-     enter(scene, sprite) {
-        this.isJumping = true
-        sprite.setVelocityY(-300)
+        // Initial jump
+        sprite.setVelocityY(-400)
+        
         // Lock horizontal velocity at jump start
         this.initialVelocityX = sprite.body.velocity.x
         sprite.setVelocityX(this.initialVelocityX)
         
+        // Play jump animation
         sprite.anims.play('jump')
+        
+        // Initialize state flags
+        this.hasDoubleJumped = false
+        this.isJumping = true
+        this.wasInAir = false
+        
+        // Track space key release for double jump control
+        this.spaceKeyReleased = false
+        
+        // Listen for animation completion
         sprite.once('animationcomplete_jump', () => {
-          sprite.setVelocityY(600)
             this.isJumping = false
-            this.stateMachine.transition('idle')
         })
     }
 
     execute(scene, sprite) {
-      const {left, right, up, down, space} = scene.keys;
-        // Keep the initial velocity locked during the entire jump
-        if (this.isJumping) {
-            sprite.setVelocityX(this.initialVelocityX)
+        const {space} = scene.keys
+        
+        // Track if space key has been released (needed for double jump)
+        if (!space.isDown) {
+            this.spaceKeyReleased = true
+        }
+        
+        // Check for double jump
+        if (space.isDown && this.spaceKeyReleased && !this.hasDoubleJumped && !this.isJumping) {
+            sprite.setVelocityY(-300) // Slightly weaker second jump
+            this.hasDoubleJumped = true
+            sprite.anims.play('jump', true) // Play jump animation again
             return
         }
-        // Transition to move if pressing a movement key
-        if (left.isDown || right.isDown || up.isDown ) {
-            return;
+        
+        // Lock horizontal velocity during jump
+        sprite.setVelocityX(this.initialVelocityX)
+        
+        // Landing detection
+        if (sprite.body.velocity.y > 0) {
+            this.wasInAir = true
+        }
+        
+        // Check for landing only if we were in the air
+        if (this.wasInAir && (sprite.body.blocked.down || sprite.body.touching.down)) {
+            // Transition to appropriate state based on initial velocity
+            if (Math.abs(this.initialVelocityX) > 0) {
+                this.stateMachine.transition('move')
+            } else {
+                this.stateMachine.transition('idle')
+            }
         }
     }
-   }
-   export class DeadState extends State {
-     /**
-      * 
-      * @param {Scene} scene 
-      * @param {Phaser.Physics.Arcade.Sprite} sprite 
-      */
-     enter(scene, sprite){
- 
-       //hero.anims.stop()
-       sprite.setVelocity(0)
-       sprite.anims.play('dead', true)
-     }
-     /**
-      * 
-      * @param {Scene} scene 
-      * @param {Phaser.Physics.Arcade.Sprite} sprite 
-      */
-     execute(scene, sprite){
-       //console.log("Dead state")
-     }
-   }
+
+    exit(scene, sprite) {
+        // Reset all state flags on exit
+        this.hasDoubleJumped = false
+        this.isJumping = false
+        this.wasInAir = false
+        this.spaceKeyReleased = false
+    }
+}
+
+export class DeadState extends State {
+    /**
+     * 
+     * @param {Scene} scene 
+     * @param {Phaser.Physics.Arcade.Sprite} sprite 
+     */
+    enter(scene, sprite){
+        //hero.anims.stop()
+        sprite.setVelocity(0)
+        sprite.anims.play('dead', true)
+    }
+    /**
+     * 
+     * @param {Scene} scene 
+     * @param {Phaser.Physics.Arcade.Sprite} sprite 
+     */
+    execute(scene, sprite){
+        //console.log("Dead state")
+    }
+}

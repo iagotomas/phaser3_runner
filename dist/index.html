@@ -5,7 +5,13 @@
         <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
         <meta name="apple-mobile-web-app-capable" content="yes">
         <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-        <meta name="apple-mobile-web-app-title" content="Little Games">
+        <meta name="apple-mobile-web-app-title" content="Susana's Land">
+        <!-- Force landscape orientation -->
+        <meta name="screen-orientation" content="landscape">
+        <meta name="orientation" content="landscape">
+        
+        <!-- Add version meta tag -->
+        <meta name="version" content="1.0.0">
         
         <!-- iOS icons -->
         <link rel="apple-touch-icon" href="assets/icons/icon-180.png">
@@ -13,10 +19,40 @@
         <link rel="apple-touch-icon" sizes="180x180" href="assets/icons/icon-180.png">
         <link rel="apple-touch-icon" sizes="167x167" href="assets/icons/icon-167.png">
         
-        <!-- Splash screens -->
-        <link rel="apple-touch-startup-image" href="assets/splash/splash-2048x2732.png" media="(device-width: 1024px) and (device-height: 1366px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)">
-        <link rel="apple-touch-startup-image" href="assets/splash/splash-1536x2048.png" media="(device-width: 768px) and (device-height: 1024px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)">
+        <!-- Add manifest -->
+        <link rel="manifest" href="manifest.json">
         
+        <!-- Splash screens -->
+        <!-- iPhone SE, iPod Touch 5gen and older iPhones -->
+        <link rel="apple-touch-startup-image" href="assets/splash/splash-1136x640.png" media="(device-width: 320px) and (device-height: 568px) and (-webkit-device-pixel-ratio: 2) and (orientation: landscape)">
+        
+        <!-- iPhone 8, 7, 6s, 6 -->
+        <link rel="apple-touch-startup-image" href="assets/splash/splash-1334x750.png" media="(device-width: 375px) and (device-height: 667px) and (-webkit-device-pixel-ratio: 2) and (orientation: landscape)">
+        
+        <!-- iPhone 8 Plus, 7 Plus, 6s Plus, 6 Plus -->
+        <link rel="apple-touch-startup-image" href="assets/splash/splash-2208x1242.png" media="(device-width: 414px) and (device-height: 736px) and (-webkit-device-pixel-ratio: 3) and (orientation: landscape)">
+        
+        <!-- iPhone X, XS -->
+        <link rel="apple-touch-startup-image" href="assets/splash/splash-2436x1125.png" media="(device-width: 375px) and (device-height: 812px) and (-webkit-device-pixel-ratio: 3) and (orientation: landscape)">
+        
+        <!-- iPhone XR -->
+        <link rel="apple-touch-startup-image" href="assets/splash/splash-1792x828.png" media="(device-width: 414px) and (device-height: 896px) and (-webkit-device-pixel-ratio: 2) and (orientation: landscape)">
+        
+        <!-- iPhone XS Max -->
+        <link rel="apple-touch-startup-image" href="assets/splash/splash-2688x1242.png" media="(device-width: 414px) and (device-height: 896px) and (-webkit-device-pixel-ratio: 3) and (orientation: landscape)">
+        
+        <!-- iPad -->
+        <link rel="apple-touch-startup-image" href="assets/splash/splash-2048x1536.png" media="(device-width: 768px) and (device-height: 1024px) and (-webkit-device-pixel-ratio: 2) and (orientation: landscape)">
+        
+        <!-- iPad Pro 10.5" -->
+        <link rel="apple-touch-startup-image" href="assets/splash/splash-2224x1668.png" media="(device-width: 834px) and (device-height: 1112px) and (-webkit-device-pixel-ratio: 2) and (orientation: landscape)">
+        
+        <!-- iPad Pro 11" -->
+        <link rel="apple-touch-startup-image" href="assets/splash/splash-2388x1668.png" media="(device-width: 834px) and (device-height: 1194px) and (-webkit-device-pixel-ratio: 2) and (orientation: landscape)">
+        
+        <!-- iPad Pro 12.9" -->
+        <link rel="apple-touch-startup-image" href="assets/splash/splash-2732x2048.png" media="(device-width: 1024px) and (device-height: 1366px) and (-webkit-device-pixel-ratio: 2) and (orientation: landscape)">
+
         <style>
             html, body {
                 margin: 0;
@@ -38,15 +74,72 @@
                 height: 100%;
                 touch-action: none;
                 position: fixed;
+            }
+            /* Add rotation warning for portrait */
+            #rotation-warning {
+                display: none;
+                position: fixed;
                 top: 0;
                 left: 0;
                 right: 0;
                 bottom: 0;
+                z-index: 999999;
+                justify-content: center;
+                align-items: center;
+                flex-direction: column;
+                text-align: center;
+                padding: 20px; 
+                background-color: aquamarine;
+                color: black;
+                font-family: 'Courier New', Courier, monospace;
+            }
+            @media screen and (orientation: portrait) {
+                #rotation-warning {
+                    display: flex;   
+                }
+                #rotation-warning-icon{
+                    font-size: 14em;
+                }
             }
         </style>
-        <title>Little Games</title>
+        <title>Susana's Land</title>
+        <script>
+            // Register service worker
+            if ('serviceWorker' in navigator) {
+                window.addEventListener('load', () => {
+                    navigator.serviceWorker.register('/service-worker.js')
+                        .then(registration => {
+                            console.log('ServiceWorker registration successful');
+                            
+                            // Check for updates
+                            registration.addEventListener('updatefound', () => {
+                                const newWorker = registration.installing;
+                                newWorker.addEventListener('statechange', () => {
+                                    if (newWorker.state === 'installed') {
+                                        if (navigator.serviceWorker.controller) {
+                                            // New version available
+                                            if (confirm('A new version is available! Reload to update?')) {
+                                                window.location.reload();
+                                            }
+                                        }
+                                    }
+                                });
+                            });
+                        })
+                        .catch(error => {
+                            console.log('ServiceWorker registration failed:', error);
+                        });
+                });
+            }
+        </script>
     </head>
     <body>
         <div id="game"></div>
+        <!-- Add rotation warning -->
+        <div id="rotation-warning">
+            <div id="rotation-warning-icon">📱</div>
+            <h2>Si us plau, gira el teu dispositiu</h2>
+            <p>Aquest joc és millor en mode horitzontal</p>
+        </div>
     </body>
 </html>

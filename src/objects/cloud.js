@@ -10,6 +10,7 @@ export default class CloudManager {
             groundDelay: 3000, // Time to wait on ground before disappearing
             maxBounces: 3, // Maximum number of bounces before stopping
             onBallCollect: config.onBallCollect || null,
+            depth: config.depth || 15,
             ...config
         }
 
@@ -21,43 +22,6 @@ export default class CloudManager {
             bounceY: 0.6,
             dragX: 50
         })
-
-        this.createBall = () => {
-            const isSpecialBall = Math.random() < 0.2; // 20% chance for special ball
-            const ball = this.ballGroup.create(
-                Phaser.Math.Between(0, scene.game.config.width * 3),
-                0,
-                'ball'
-            );
-            
-            if (isSpecialBall) {
-                ball.setScale(6); // Make special balls 3x bigger
-                ball.isSpecial = true;
-                ball.setTint(0xFFD700); // Gold color
-                
-                // Add glow effect
-                const glowFX = ball.preFX.addGlow(0xFFD700, 4, 0, false, 0.1, 16);
-                
-                // Add pulsing animation
-                scene.tweens.add({
-                    targets: ball,
-                    scale: { from: 2.8, to: 3.2 },
-                    duration: 1000,
-                    yoyo: true,
-                    repeat: -1,
-                    ease: 'Sine.easeInOut'
-                });
-            } else {
-                ball.setScale(1);
-                ball.isSpecial = false;
-            }
-            
-            ball.setBounce(0.2);
-            ball.setCollideWorldBounds(true);
-            ball.setVelocity(Phaser.Math.Between(-200, 200), 20);
-            ball.setAngularVelocity(90);
-        };
-
         this.initialize()
     }
 
@@ -78,7 +42,7 @@ export default class CloudManager {
     }
 
     spawnCloud() {
-        const clouds = ['cloud_aaa', 'cloud_aab', 'cloud_aac', 'cloud_aad', 'cloud_aae', 'cloud_big_aaa']
+        const clouds = ['cloud_aaa', 'cloud_aab', 'cloud_aac', 'cloud_aad', 'cloud_aae']//, 'cloud_big_aaa']
         const random = Math.floor(Math.random() * clouds.length);
         const cloud = this.cloudGroup.create(
             this.scene.cameras.main.scrollX + this.scene.game.config.width + 200, 
@@ -88,6 +52,7 @@ export default class CloudManager {
             
         )
         cloud.setScale(Phaser.Math.FloatBetween(0.9, 1.2))
+        cloud.setDepth(this.config.depth)
         cloud.cloudSpeed = Phaser.Math.FloatBetween(2, 4)
         
         this.setupCloudDropping(cloud)
@@ -111,6 +76,8 @@ export default class CloudManager {
             ball.isSpecial = Math.random() < 0.2
             ball.setActive(true)
             ball.setVisible(true)
+            ball.setCircle(15)
+            ball.setDepth(this.config.depth - 1)
             ball.body.enable = true
             
             // Set initial properties
@@ -173,10 +140,12 @@ export default class CloudManager {
                         duration: 500,
                         onComplete: () => {
                             this.ballGroup.killAndHide(ball)
-                            ball.body.enable = false
-                            ball.setActive(false)
-                            ball.setVisible(false)
-                            ball.alpha = 1 // Reset alpha for reuse
+                            if(ball) {
+                                ball.body.enable = false
+                                ball.setActive(false)
+                                ball.setVisible(false)
+                                ball.alpha = 1 // Reset alpha for reuse
+                            }
                         }
                     })
                 },
@@ -187,8 +156,8 @@ export default class CloudManager {
             // Reduce bounce velocity each time
             const currentVelocity = ball.body.velocity
             ball.body.setVelocity(
-                currentVelocity.x * 0.7,
-                currentVelocity.y * 0.7
+                currentVelocity.x * 1,
+                currentVelocity.y * 0.9
             )
         }
     }

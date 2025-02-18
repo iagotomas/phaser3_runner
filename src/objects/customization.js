@@ -2,9 +2,9 @@ export default class CustomizationManager {
     constructor() {
         this.unlockables = {
             hats: [
-                { id: 'hat1', name: 'Party Hat', price: 10, sprite: 'hat1', offset: { x: -5, y: -55 } }/*,
-                { id: 'hat2', name: 'Crown', price: 25, sprite: 'hat2', offset: { x: 0, y: -15 } },
-                { id: 'hat3', name: 'Wizard Hat', price: 50, sprite: 'hat3', offset: { x: 0, y: -25 } }*/
+                { id: 'hat1', name: 'Party Hat', price: 10, sprite: 'hat1', offset: { x: -5, y: -90 }, rotation: 0 },
+                { id: 'hat2', name: 'Crown', price: 25, sprite: 'hat2', offset: { x: 0, y: -80 }, rotation: 0 },
+                { id: 'hat3', name: 'Wizard Hat', price: 50, sprite: 'hat3', offset: { x: 0, y: -60 }, rotation: 0 }
             ],
             trails: [
                /* { id: 'trail1', name: 'Sparkles', price: 15, particle: 'sparkle' },
@@ -15,7 +15,7 @@ export default class CustomizationManager {
         
         // Load saved unlocks from localStorage
         this.unlockedItems = JSON.parse(localStorage.getItem('unlockedItems')) || []
-        this.equippedItems = JSON.parse(localStorage.getItem('equippedItems')) || { hat: 'hat1', trail: 'trail3' }
+        this.equippedItems = JSON.parse(localStorage.getItem('equippedItems')) || { hat: 'hat3', trail: 'trail3' }
     }
 
     canAfford(item, coins) {

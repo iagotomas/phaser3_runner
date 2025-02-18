@@ -30,7 +30,7 @@ module.exports = {
         }
       },
       {
-        test: [ /\.vert$/, /\.frag$/ ],
+        test: [ /\.vert$/, /\.frag$/],
         use: require.resolve('raw-loader'),
       },
     ],
