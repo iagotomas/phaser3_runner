@@ -162,26 +162,29 @@ export default class CloudManager {
     }
 
     update() {
-        // Wrap clouds horizontally
-         // Move clouds horizontally
-         this.cloudGroup.children.entries.forEach(cloud => {
+        // Optimize cloud updates by using a for loop and caching camera scroll
+        const cameraScrollX = this.scene.cameras.main.scrollX
+        const clouds = this.cloudGroup.children.entries
+        
+        for (let i = clouds.length - 1; i >= 0; i--) {
+            const cloud = clouds[i]
             cloud.x -= cloud.cloudSpeed
 
-            // Wrap clouds horizontally
-            if (cloud.x < this.scene.cameras.main.scrollX - 300) {
+            if (cloud.x < cameraScrollX - 300) {
                 cloud.dropTimer.remove()
                 cloud.destroy()
                 this.spawnCloud()
             }
-        })
-        // Update ball physics
-        this.ballGroup.children.entries.forEach(ball => {
-            if (ball) {
-                if(ball.x < this.scene.cameras.main.scrollX - 50) {
-                    this.ballGroup.killAndHide(ball)
-                    this.cleanupBall(ball)
-                }
+        }
+
+        // Optimize ball cleanup
+        const balls = this.ballGroup.children.entries
+        for (let i = balls.length - 1; i >= 0; i--) {
+            const ball = balls[i]
+            if (ball && ball.x < cameraScrollX - 50) {
+                this.ballGroup.killAndHide(ball)
+                this.cleanupBall(ball)
             }
-        })
+        }
     }
 }

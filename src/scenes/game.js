@@ -2,6 +2,7 @@ import { Scene } from 'phaser'
 import StateMachine from '../objects/statemachine'
 import Player from '../objects/player'
 import CloudManager from '../objects/cloud'
+import ShopUI from '../objects/shopui'
 /**
  * Depth hierarchy (from back to front):
     0: Sky background
@@ -28,6 +29,7 @@ export default class Game extends Scene {
         this.targetMarker = null;
         // Initialize score from localStorage or default to 0
         this.coinScore = parseInt(localStorage.getItem('coinScore')) || 0;
+        this.lastCameraScrollX = 0;
     }
 
     preload() {}
@@ -56,7 +58,7 @@ export default class Game extends Scene {
         this.platformGroup = this.physics.add.staticGroup()
         
         const groundY = this.scale.height - 64
-        const segmentWidth = 142//this.scale.width
+        const segmentWidth = 142 //this.scale.width
         
         console.log('Creating platforms:', {
             groundY,
@@ -187,8 +189,8 @@ export default class Game extends Scene {
         .on('pointerdown', () => this.openShop(), this)
         .setDepth(100)
 
-        // Initialize shop UI
-        this.createShopUI()
+        // Replace shop UI creation with:
+        this.shopUI = new ShopUI(this)
 
         // Add background music
         this.bgMusic = this.sound.add('bgMusic', {
@@ -376,10 +378,9 @@ export default class Game extends Scene {
                 .setPosition(width - buttonSize - padding, height - buttonSize - padding)
         }
 
-        // Update shop UI if it exists
-        if (this.shopUI && this.shopUI.visible) {
-            this.createShopUI() // Recreate shop UI with new dimensions
-            this.shopUI.setVisible(true)
+        // Replace shop UI resize code with:
+        if (this.shopUI) {
+            this.shopUI.handleResize()
         }
 
         // Update world bounds
@@ -435,166 +436,33 @@ export default class Game extends Scene {
 
     update(time, delta) {
         this.player.step()
-
         this.cloudManager.update()
-        // Update FPS counter
-        const fps = (1000 / delta).toFixed(0)
-        this.fpsText.setText(`FPS: ${fps}`)
 
-        // Update parallax scrolling with proper speeds
-        const scrollSpeeds = [0.1, 0.3, 0.5, 0.5, 0.6, 0.6, 0.7, 0.7, 0.7, 0.9, 0.9]
-        this.backgrounds.forEach((bg, index) => {
-            if (bg && bg.active && index > 0) { // Skip sky background and check if bg exists
-                bg.tilePositionX = this.cameras.main.scrollX * scrollSpeeds[index]
-            }
-        })
-    }
-    createShopUI() {
-        // Destroy existing shop UI if it exists
-        if (this.shopUI) {
-            this.shopUI.removeAll(true)
-            this.shopUI.destroy()
+        // Update FPS counter less frequently
+        if (time % 10 === 0) { // Only update every 10 frames
+            const fps = (1000 / delta).toFixed(0)
+            this.fpsText.setText(`FPS: ${fps}`)
         }
-        
-        // Create a new Scene specifically for the shop UI
-        this.shopUI = this.add.container()
-        
-        // Get screen dimensions
-        const width = this.cameras.main.width
-        const height = this.cameras.main.height
-        
-        // Semi-transparent dark overlay
-        const overlay = this.add.rectangle(width/2, height/2, width, height, 0x000000, 0.7)
-            .setInteractive()
-            .setScrollFactor(0)
-        this.shopUI.add(overlay)
-        
-        // Add shop background image
-        const shopBg = this.add.image(width/2, height/2, 'shopbg')
-            .setScrollFactor(0)
-        
-        // Scale the background to fit the screen while maintaining aspect ratio
-        const scale = Math.min(
-            (width * 0.8) / shopBg.width,
-            (height * 0.8) / shopBg.height
-        )
-        shopBg.setScale(scale)
-        this.shopUI.add(shopBg)
-        
-        // Close button
-        const closeBtn = this.add.text(width - 60, 20, '❌', { 
-            fontSize: '32px',
-            padding: { x: 10, y: 10 }
-        })
-        .setScrollFactor(0)
-        .setInteractive({ useHandCursor: true })
-        .on('pointerdown', () => this.closeShop())
-        this.shopUI.add(closeBtn)
-        
-        // Calculate item positions based on shelf image
-        const shelfTop = height - (shopBg.displayHeight * 0.46) // Adjust this value to align with shelf
-        const itemSpacing = shopBg.displayWidth * 0.16 // Space between items
-        const startX = width/2 - (itemSpacing * 1.45) // Start from left side of shelf
-        
-        // Create item buttons in a horizontal layout
-        this.player.customization.unlockables.hats.forEach((item, index) => {
-            const x = startX + (itemSpacing * index)
-            const y = shelfTop
-            
-            // Item container
-            const itemContainer = this.add.container(x, y)
-            
-            // Item background/button
-            const buttonBg = this.add.rectangle(5, -5, 80, 60, 0xffffff)
-                .setInteractive({ useHandCursor: true })
-                .on('pointerdown', () => this.purchaseItem(item))
-                .on('pointerover', () => buttonBg.setFillStyle(0x666666))
-                .on('pointerout', () => buttonBg.setFillStyle(0x444444))
-            
-            // Item preview image
-            const preview = this.add.image(0, 0, item.id)
-                .setScale(0.5) // Adjust scale as needed
-            
-            // Price/status text
-            const text = this.add.text(5, -85, 
-                this.player.customization.isUnlocked(item.id) ? 'Owned' : `${item.price} 🪙`, 
-                { 
-                    fontSize: '32px',
-                    fontFamily: 'Coming Soon',
-                    align: 'center',
-                    color: '#ffffff',
-                    stroke: '#000000',
-                    strokeThickness: 4
-                }
-            ).setOrigin(0.5)
-            
-            itemContainer.add([buttonBg, preview, text])
-            this.shopUI.add(itemContainer)
-        })
 
-        // Set depth and initial visibility
-        this.shopUI.setDepth(1000)
-        this.shopUI.setVisible(false)
-        
-        // Ensure all children ignore scroll
-        this.shopUI.each(child => {
-            child.setScrollFactor(0)
-            // Refresh input handling for interactive elements
-            if (child.input) {
-                child.removeInteractive()
-                child.setInteractive()
-            }
-        })
+        // Only update parallax if camera has moved
+        const currentScrollX = this.cameras.main.scrollX
+        if (currentScrollX !== this.lastCameraScrollX) {
+            const scrollSpeeds = [0.1, 0.2, 0.3, 0.5, 0.8] //[0.1, 0.3, 0.5, 0.5, 0.6, 0.6, 0.7, 0.7, 0.7, 0.9, 0.9]
+            this.backgrounds.forEach((bg, index) => {
+                if (bg && bg.active && index > 0) {
+                    bg.tilePositionX = currentScrollX * scrollSpeeds[index]
+                }
+            })
+            this.lastCameraScrollX = currentScrollX
+        }
     }
 
     openShop() {
-        if (!this.shopUI) {
-            this.createShopUI()
-        }
-        
-        // Ensure UI is positioned correctly relative to camera
-        this.shopUI.setVisible(true)
-        
-        // Disable game input while shop is open
-        this.input.keyboard.enabled = false
-        if (this.moveTarget) {
-            this.moveTarget = null
-            this.player.setVelocityX(0)
-        }
-
-        // Pause physics while shop is open
-        this.physics.pause()
+        this.shopUI.open()
     }
 
     closeShop() {
-        if (this.shopUI) {
-            this.shopUI.setVisible(false)
-            
-            // Re-enable game input when shop is closed
-            this.input.keyboard.enabled = true
-            
-            // Resume physics
-            this.physics.resume()
-        }
-    }
-
-    purchaseItem(item) {
-        if (this.player.customization.isUnlocked(item.id)) {
-            console.log('Equipping:', item.name)
-            this.player.customization.equipItem(item.id)
-            this.player.applyCosmetics()
-        } else if (this.player.customization.unlockItem(item.id, this.coinScore)) {
-            console.log('Purchasing:', item.name)
-            this.updateScore(this.coinScore - item.price)
-            this.player.customization.equipItem(item.id)
-            this.player.applyCosmetics()
-            
-            // Refresh the shop UI to update button states
-            this.createShopUI()
-            this.shopUI.setVisible(true)
-        } else {
-            console.log('Cannot afford:', item.name)
-        }
+        this.shopUI.close()
     }
 
     toggleMusic() {
