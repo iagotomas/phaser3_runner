@@ -121,6 +121,7 @@ export default class Preload extends Scene {
         this.load.atlas('ponygirl-jump', 'assets/girl_jumping.png', 'assets/girl_jumping.json')
         this.load.image('ground', 'assets/platform-cake.png')
         this.load.image('platform', 'assets/background/level1/Layers/layer01.png')
+        this.load.image('shopbg', 'assets/shop_shelf.png')
         
         this.load.image('sky', 'assets/background/level1/Layers/layer06.png')
         this.load.image('bg-1-01', 'assets/background/level1/Layers/layer05.png')

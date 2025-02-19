@@ -459,17 +459,29 @@ export default class Game extends Scene {
         // Create a new Scene specifically for the shop UI
         this.shopUI = this.add.container()
         
-        // Get screen dimensions (not world dimensions)
+        // Get screen dimensions
         const width = this.cameras.main.width
         const height = this.cameras.main.height
         
-        // Background with interaction
-        const bg = this.add.rectangle(width/2, height/2, width, height, 0x000000, 0.8)
+        // Semi-transparent dark overlay
+        const overlay = this.add.rectangle(width/2, height/2, width, height, 0x000000, 0.7)
             .setInteractive()
             .setScrollFactor(0)
-        this.shopUI.add(bg)
+        this.shopUI.add(overlay)
         
-        // Close button - position relative to camera viewport
+        // Add shop background image
+        const shopBg = this.add.image(width/2, height/2, 'shopbg')
+            .setScrollFactor(0)
+        
+        // Scale the background to fit the screen while maintaining aspect ratio
+        const scale = Math.min(
+            (width * 0.8) / shopBg.width,
+            (height * 0.8) / shopBg.height
+        )
+        shopBg.setScale(scale)
+        this.shopUI.add(shopBg)
+        
+        // Close button
         const closeBtn = this.add.text(width - 60, 20, '❌', { 
             fontSize: '32px',
             padding: { x: 10, y: 10 }
@@ -479,40 +491,52 @@ export default class Game extends Scene {
         .on('pointerdown', () => this.closeShop())
         this.shopUI.add(closeBtn)
         
-        // Create item buttons
-        let y = 100
-        this.player.customization.unlockables.hats.forEach(item => {
-            // Create individual interactive button (not container)
-            const buttonBg = this.add.rectangle(width/2, y, 300, 60, 0x444444)
-                .setScrollFactor(0)
+        // Calculate item positions based on shelf image
+        const shelfTop = height - (shopBg.displayHeight * 0.46) // Adjust this value to align with shelf
+        const itemSpacing = shopBg.displayWidth * 0.16 // Space between items
+        const startX = width/2 - (itemSpacing * 1.45) // Start from left side of shelf
+        
+        // Create item buttons in a horizontal layout
+        this.player.customization.unlockables.hats.forEach((item, index) => {
+            const x = startX + (itemSpacing * index)
+            const y = shelfTop
+            
+            // Item container
+            const itemContainer = this.add.container(x, y)
+            
+            // Item background/button
+            const buttonBg = this.add.rectangle(5, -5, 80, 60, 0xffffff)
                 .setInteractive({ useHandCursor: true })
                 .on('pointerdown', () => this.purchaseItem(item))
                 .on('pointerover', () => buttonBg.setFillStyle(0x666666))
                 .on('pointerout', () => buttonBg.setFillStyle(0x444444))
             
-            // Create button text
-            const text = this.add.text(width/2, y, 
-                `${item.name}\n${this.player.customization.isUnlocked(item.id) ? 'Owned' : item.price + ' coins'}`, 
+            // Item preview image
+            const preview = this.add.image(0, 0, item.id)
+                .setScale(0.5) // Adjust scale as needed
+            
+            // Price/status text
+            const text = this.add.text(5, -85, 
+                this.player.customization.isUnlocked(item.id) ? 'Owned' : `${item.price} 🪙`, 
                 { 
-                    fontSize: '20px',
+                    fontSize: '32px',
+                    fontFamily: 'Coming Soon',
                     align: 'center',
-                    color: '#ffffff'
+                    color: '#ffffff',
+                    stroke: '#000000',
+                    strokeThickness: 4
                 }
-            )
-            .setScrollFactor(0)
-            .setOrigin(0.5)
+            ).setOrigin(0.5)
             
-            // Add elements directly to shop UI (not in a container)
-            this.shopUI.add([buttonBg, text])
-            
-            y += 80
+            itemContainer.add([buttonBg, preview, text])
+            this.shopUI.add(itemContainer)
         })
 
-        // Set all UI elements to ignore camera scroll and ensure proper depth
+        // Set depth and initial visibility
         this.shopUI.setDepth(1000)
         this.shopUI.setVisible(false)
         
-        // Make sure all children ignore scroll and are interactive
+        // Ensure all children ignore scroll
         this.shopUI.each(child => {
             child.setScrollFactor(0)
             // Refresh input handling for interactive elements
