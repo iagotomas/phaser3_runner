@@ -22,6 +22,18 @@ export default class CloudManager {
             dragX: -20
         })
         this.initialize()
+
+        // Add screen bounds for balls
+        const width = scene.scale.width;
+        const height = scene.scale.height;
+        
+        // Configure ball physics
+        this.ballGroup.getChildren().forEach(ball => {
+            ball.body.setCollideWorldBounds(true);
+            ball.body.setBounce(0.8);
+            ball.body.setDrag(50);
+            ball.body.setMaxVelocity(400);
+        });
     }
 
     initialize() {
@@ -122,7 +134,7 @@ export default class CloudManager {
             currentVelocity.y * 0.9
         )
             // Start ground timer
-            ball.groundTimer = this.scene.time.delayedCall(
+        ball.groundTimer = this.scene.time.delayedCall(
             this.config.groundDelay,
             () => {
                 // Fade out effect
@@ -161,6 +173,43 @@ export default class CloudManager {
         }
     }
 
+    spawnBall(x, y) {
+        // Only spawn new ball if we're below maximum count
+        const maxBalls = 5;
+        const currentBalls = this.ballGroup.getChildren().length;
+        
+        if (currentBalls >= maxBalls) {
+            // Check if any balls are out of bounds or inactive
+            const activeBalls = this.ballGroup.getChildren().filter(ball => {
+                const bounds = this.scene.cameras.main.worldView;
+                return bounds.contains(ball.x, ball.y) && ball.active;
+            });
+            
+            if (activeBalls.length >= maxBalls) {
+                return null; // Don't spawn if we have enough active balls
+            }
+        }
+
+        const ball = this.ballGroup.create(x, y, 'ball');
+        ball.setScale(0.5);
+        
+        // Configure ball physics
+        ball.body.setCollideWorldBounds(true);
+        ball.body.setBounce(0.8);
+        ball.body.setDrag(50);
+        ball.body.setMaxVelocity(400);
+        
+        // Give initial random velocity
+        const angle = Phaser.Math.Between(0, 360);
+        const speed = 200;
+        ball.body.setVelocity(
+            Math.cos(angle) * speed,
+            Math.sin(angle) * speed
+        );
+        
+        return ball;
+    }
+
     update() {
         // Optimize cloud updates by using a for loop and caching camera scroll
         const cameraScrollX = this.scene.cameras.main.scrollX
@@ -186,5 +235,13 @@ export default class CloudManager {
                 this.cleanupBall(ball)
             }
         }
+
+        // Clean up balls that are somehow out of bounds
+        this.ballGroup.getChildren().forEach(ball => {
+            const bounds = this.scene.cameras.main.worldView;
+            if (!bounds.contains(ball.x, ball.y)) {
+                ball.destroy();
+            }
+        });
     }
 }

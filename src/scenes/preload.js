@@ -90,34 +90,59 @@ export default class Preload extends Scene {
             loadingContainer.destroy()
             bg.destroy()
             
-            // Add "Press any key to start" text
-            const startText = this.add.text(width/2, height/2 + 50, 'Toca per començar', {
-                fontFamily: 'Arial',
-                fontSize: '42px',
-                color: '#ed5fd3',
-                stroke: '#de1dba',
-                strokeThickness: 4
-            })
-            startText.setOrigin(0.5, 0.5)
-            startText.setDepth(1)
-            startText.postFX.addGlow()
-            // Add blinking animation
-            this.tweens.add({
-                targets: startText,
-                alpha: 0,
-                duration: 1000,
-                ease: 'Power2',
-                yoyo: true,
-                repeat: -1
-            })
+            // Create DOM button for start/permission
+            const startButton = document.createElement('button')
+            startButton.innerHTML = 'Toca per començar'
+            startButton.style.position = 'absolute'
+            startButton.style.left = '50%'
+            startButton.style.top = '50%'
+            startButton.style.transform = 'translate(-50%, -50%)'
+            startButton.style.padding = '20px 40px'
+            startButton.style.fontSize = '24px'
+            startButton.style.backgroundColor = 'rgba(0, 0, 0, 0.8)'
+            startButton.style.color = '#ed5fd3'
+            startButton.style.border = '4px solid #de1dba'
+            startButton.style.borderRadius = '8px'
+            startButton.style.cursor = 'pointer'
+            startButton.style.zIndex = '1000'
+            startButton.style.textShadow = '0 0 10px #ed5fd3'
+
+            document.body.appendChild(startButton)
+
+            // Add hover effects
+            startButton.onmouseover = () => {
+                startButton.style.backgroundColor = 'rgba(51, 51, 51, 0.8)'
+            }
             
-            // Add input handlers
-            this.input.keyboard.once('keydown', () => this.scene.start('game'))
-            this.input.once('pointerdown', () => this.scene.start('game'))
+            startButton.onmouseout = () => {
+                startButton.style.backgroundColor = 'rgba(0, 0, 0, 0.8)'
+            }
+
+            // Handle button click
+            startButton.onclick = async () => {
+                // Check if we need to request motion permission
+                if (typeof DeviceOrientationEvent !== 'undefined' && 
+                    typeof DeviceOrientationEvent.requestPermission === 'function') {
+                    try {
+                        const permission = await DeviceOrientationEvent.requestPermission()
+                        localStorage.setItem('motionPermission', permission)
+                    } catch (error) {
+                        console.error('Permission error:', error)
+                        localStorage.setItem('motionPermission', 'error')
+                    }
+                } else {
+                    localStorage.setItem('motionPermission', 'granted')
+                }
+                
+                // Remove button and start game
+                document.body.removeChild(startButton)
+                this.scene.start('game')
+            }
         })
 
         // Load rest of game assets
         this.load.atlas('ponygirl', 'assets/game_sprites.png', 'assets/game_sprites.json')
+        this.load.atlas('maze', 'assets/maze.png', 'assets/maze.json')
         this.load.atlas('ponygirl-jump', 'assets/girl_jumping.png', 'assets/girl_jumping.json')
         this.load.image('ground', 'assets/platform-cake.png')
         this.load.image('platform', 'assets/background/level1/Layers/layer01.png')
@@ -134,6 +159,7 @@ export default class Preload extends Scene {
         this.load.image('hat2', 'assets/cosmetics/crown.png')
         this.load.image('hat3', 'assets/cosmetics/cowboy.png')
         this.load.image('hat4', 'assets/cosmetics/princess_crown.png')
+        this.load.image('hat5', 'assets/cosmetics/pirate-hat.png')
         this.load.image('star', 'assets/particles/star.png')
 
         // Load background music

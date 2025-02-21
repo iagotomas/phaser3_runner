@@ -18,15 +18,8 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
         scene.add.existing(this)
         scene.physics.add.existing(this)
         // Set default size (320x320)
-        const targetWidth = 320
-        const targetHeight = 320
-        
-        // Calculate scale based on texture size
-        /*const scaleX = targetWidth / this.body.width
-        const scaleY = targetHeight / this.body.height
-        this.setScale(1, 1)
-        console.log(`Player width: ${this.body.width}, height: ${this.body.height}, scaleX: ${scaleX}, scaleY: ${scaleY}, targetWidth: ${targetWidth}, targetHeight: ${targetHeight}`)
-*/
+        const targetWidth = 310
+        const targetHeight = 310
         // Adjust physics body size (make it smaller than visual size)
         this.body.setSize(targetWidth * 0.6, targetHeight * 0.5)
         this.body.setOffset(targetWidth * 0.05, targetHeight * 0.15)

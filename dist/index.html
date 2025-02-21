@@ -68,37 +68,52 @@
                 -ms-user-select: none;
                 user-select: none;
                 background-color: #000;
+                position: fixed; /* Prevent bouncing on iOS */
             }
             #game {
                 width: 100%;
                 height: 100%;
                 touch-action: none;
                 position: fixed;
-            }
-            /* Add rotation warning for portrait */
-            #rotation-warning {
-                display: none;
-                position: fixed;
-                top: 0;
-                left: 0;
-                right: 0;
-                bottom: 0;
-                z-index: 999999;
-                justify-content: center;
+                transform-origin: center;
+                display: flex;
                 align-items: center;
-                flex-direction: column;
-                text-align: center;
-                padding: 20px; 
-                background-color: aquamarine;
-                color: black;
-                font-family: 'Courier New', Courier, monospace;
+                justify-content: center;
             }
-            @media screen and (orientation: portrait) {
-                #rotation-warning {
-                    display: flex;   
+            
+            /* Always force landscape mode */
+            @media screen {
+                #game {
+                    position: absolute;
+                    top: 50%;
+                    left: 50%;
+                    transform: translate(-50%, -50%);
+                    width: 100vw;
+                    height: 100vh;
                 }
-                #rotation-warning-icon{
-                    font-size: 14em;
+                
+                canvas {
+                    max-width: 100%;
+                    max-height: 100%;
+                    width: auto !important;
+                    height: auto !important;
+                    object-fit: contain;
+                }
+                
+                /* Force landscape in portrait orientation */
+                @media (orientation: portrait) {
+                    #game {
+                        width: 100vh !important;
+                        height: 100vw !important;
+                        transform: translate(-50%, -50%) rotate(-90deg);
+                    }
+                    
+                    canvas {
+                        max-width: none;
+                        max-height: none;
+                        width: 100% !important;
+                        height: 100% !important;
+                    }
                 }
             }
         </style>
@@ -135,11 +150,5 @@
     </head>
     <body>
         <div id="game"></div>
-        <!-- Add rotation warning -->
-        <div id="rotation-warning">
-            <div id="rotation-warning-icon">📱</div>
-            <h2>Si us plau, gira el teu dispositiu</h2>
-            <p>Aquest joc és millor en mode horitzontal</p>
-        </div>
     </body>
 </html>

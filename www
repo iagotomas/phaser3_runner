@@ -4,7 +4,9 @@
 var fs = require('fs');
 var path = require('path');
 var http = require('http');
+var https = require('https');
 var httpPort = 8080;
+var httpsPort = 8443;  // Standard HTTPS port
 var staticBasePath = './build';
 
 var staticServe = function(req, res) {
@@ -30,7 +32,17 @@ var staticServe = function(req, res) {
     });
 };
 
+// Add SSL/TLS certificate configuration
+var httpsOptions = {
+    key: fs.readFileSync('certs/private.key'),
+    cert: fs.readFileSync('certs/certificate.crt')
+};
+
 var httpServer = http.createServer(staticServe);
+var httpsServer = https.createServer(httpsOptions, staticServe);
+
 console.log("Start http server on port [" + httpPort + "]");
+console.log("Start https server on port [" + httpsPort + "]");
 
 httpServer.listen(httpPort);
+httpsServer.listen(httpsPort);

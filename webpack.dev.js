@@ -1,5 +1,7 @@
 'use strict';
 
+const fs = require('fs');
+const path = require('path');
 const webpack = require('webpack');
 const { merge } = require('webpack-merge');
 const WebpackDevServer = require('webpack-dev-server');
@@ -49,11 +51,15 @@ portfinder.getPort(function(err, finalPort) {
     ],
   }));
   const server = new WebpackDevServer(compiler, {
+    https: {
+      key: fs.readFileSync(path.join(__dirname, 'certs/private.key')),
+      cert: fs.readFileSync(path.join(__dirname, 'certs/certificate.crt')),
+    },
     stats: {
       colors: true,
     },
   });
   server.listen(finalPort, null, function() {
-    console.log('Project is running at: http://localhost:' + finalPort);
+    console.log('Project is running at: https://localhost:' + finalPort);
   });
 });

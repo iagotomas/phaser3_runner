@@ -14,7 +14,7 @@ import ShopUI from '../objects/shopui'
     1000: Shop UI and overlays
  */
 const GAME_TOTAL_WIDTH_SCREENS_MULTIPLIER = 100
-export default class Game extends Scene { 
+export default class Game extends Scene {
     constructor() {
         super('game')
         this.player = null;
@@ -30,10 +30,13 @@ export default class Game extends Scene {
         // Initialize score from localStorage or default to 0
         this.coinScore = parseInt(localStorage.getItem('coinScore')) || 0;
         this.lastCameraScrollX = 0;
+        // Add mini-game related properties
+        this.minigamePortals = null;
+        this.lastPortalPosition = 0;
+        this.minPortalSpacing = 2000; // Minimum pixels between portals
+        this.portalChance = 0.3; // 30% chance to spawn a portal when possible
     }
-
-    preload() {}
-
+    
     create() {
         console.log('game started')
 
@@ -45,7 +48,7 @@ export default class Game extends Scene {
         }
 
         // Create remaining backgrounds with incremental depth
-        const frames = [ 'bg-1-01', 'bg-1-02', 'bg-1-03', 'bg-1-04']
+        const frames = ['bg-1-01', 'bg-1-02', 'bg-1-03', 'bg-1-04']
         frames.forEach((frame, index) => {
             const bg = this.background(frame)
             if (bg) {
@@ -56,22 +59,16 @@ export default class Game extends Scene {
 
         // Create platforms with higher depth than backgrounds
         this.platformGroup = this.physics.add.staticGroup()
-        
+
         const groundY = this.scale.height - 64
         const segmentWidth = 142 //this.scale.width
-        
-        console.log('Creating platforms:', {
-            groundY,
-            segmentWidth,
-            scaleWidth: this.scale.width,
-            scaleHeight: this.scale.height
-        })
+
 
         // Create visible debug rectangle to show where platform should be
         //const debugRect = this.add.rectangle(0, groundY, this.scale.width * 3, 64, 0xff0000, 0.5)
         //debugRect.setOrigin(0, 0)
         //debugRect.setDepth(10)
-        
+
         for (let x = 0; x < this.scale.width * 3; x += segmentWidth) {
             const groundSegment = this.platformGroup.create(x, groundY, 'ground')
             groundSegment.setOrigin(0, 0)
@@ -79,7 +76,7 @@ export default class Game extends Scene {
             groundSegment.refreshBody()
             groundSegment.setImmovable(true)
             groundSegment.setDepth(10)
-            
+
         }
 
         // Create player with depth above platforms
@@ -115,16 +112,16 @@ export default class Game extends Scene {
 
         // Add resize handler
         this.scale.on('resize', this.handleResize, this)
-        
+
         // Initial resize
         this.handleResize(this.scale.gameSize)
 
         console.log('Game setup complete')
 
-        // Fullscreen handling
-        this.input.on('pointerup', () => {
+        // Remove or comment out fullscreen handling
+        /* this.input.on('pointerup', () => {
             this.scale.startFullscreen()
-        }, this)
+        }, this) */
 
         // Score display with persistent value
         this.coinCounter = this.add.text(20, 20, `${this.coinScore}`, {
@@ -134,7 +131,7 @@ export default class Game extends Scene {
             fill: '#f542d7',
             stroke: '#8c1679',
             strokeThickness: 10,
-            padding: { x: 10, y: 10 }  
+            padding: { x: 10, y: 10 }
         })
         this.coinCounter.setScrollFactor(0);
         this.coinCounter.setDepth(100);
@@ -152,14 +149,14 @@ export default class Game extends Scene {
 
         // Level-specific setup
         const endZone = this.add.rectangle(
-            this.game.config.width * GAME_TOTAL_WIDTH_SCREENS_MULTIPLIER - 50, 
-            this.game.config.height / 2, 
-            50, 
-            this.game.config.height, 
+            this.game.config.width * GAME_TOTAL_WIDTH_SCREENS_MULTIPLIER - 50,
+            this.game.config.height / 2,
+            50,
+            this.game.config.height,
             0x00ff00,
             0
         )
-        
+
         this.physics.add.existing(endZone, true) // Static body
         this.physics.add.overlap(this.player, endZone, this.levelComplete, null, this)
 
@@ -184,10 +181,10 @@ export default class Game extends Scene {
             padding: { x: 10, y: 5 },
             alpha: 0.8
         })
-        .setScrollFactor(0)
-        .setInteractive({ useHandCursor: true })
-        .on('pointerdown', () => this.openShop(), this)
-        .setDepth(100)
+            .setScrollFactor(0)
+            .setInteractive({ useHandCursor: true })
+            .on('pointerdown', () => this.openShop(), this)
+            .setDepth(100)
 
         // Replace shop UI creation with:
         this.shopUI = new ShopUI(this)
@@ -197,7 +194,7 @@ export default class Game extends Scene {
             volume: 0.5,
             loop: true
         })
-        
+
         // Start playing music
         this.bgMusic.play()
 
@@ -209,13 +206,13 @@ export default class Game extends Scene {
             padding: { x: 10, y: 5 },
             alpha: 0.8
         })
-        .setScrollFactor(0)
-        .setInteractive({ useHandCursor: true })
-        .setDepth(100)
-        .on('pointerdown', () => this.toggleMusic())
+            .setScrollFactor(0)
+            .setInteractive({ useHandCursor: true })
+            .setDepth(100)
+            .on('pointerdown', () => this.toggleMusic())
 
         // Load music state from localStorage
-        const musicEnabled = localStorage.getItem('musicEnabled') !== 'false'
+        const musicEnabled = this.isMusicEnabled()
         if (!musicEnabled) {
             this.bgMusic.pause()
             this.musicButton.setText('🔈')
@@ -255,10 +252,10 @@ export default class Game extends Scene {
 
             // Convert screen coordinates to world coordinates
             const worldPoint = this.cameras.main.getWorldPoint(pointer.x, pointer.y)
-            
+
             // Set move target
             this.moveTarget = worldPoint.x
-            
+
             // Update and show target marker
             this.targetMarker.setPosition(worldPoint.x, worldPoint.y)
             this.targetMarker.setVisible(true)
@@ -280,10 +277,10 @@ export default class Game extends Scene {
             if (pointer.isDown && !this.shopUI?.visible) {
                 // Convert screen coordinates to world coordinates
                 const worldPoint = this.cameras.main.getWorldPoint(pointer.x, pointer.y)
-                
+
                 // Update move target
                 this.moveTarget = worldPoint.x
-                
+
                 // Update target marker
                 this.targetMarker.setPosition(worldPoint.x, worldPoint.y)
                 this.targetMarker.setVisible(true)
@@ -309,23 +306,47 @@ export default class Game extends Scene {
             .on('pointerout', () => {
                 this.keys.space.isDown = false
             })
+
+        // Add portal group after platform creation
+        this.minigamePortals = this.physics.add.group();
+
+        // Add collision between player and portals
+        this.physics.add.overlap(
+            this.player,
+            this.minigamePortals,
+            this.enterMinigame,
+            null,
+            this
+        );
+
+        // Start portal spawning
+        this.spawnInitialPortals();
+
+        
+        // Store gravity settings for motion controls
+        this.defaultGravityY = 200;
+        this.physics.world.gravity.y = this.defaultGravityY;
+    }
+
+    isMusicEnabled() {
+        return localStorage.getItem('musicEnabled') !== 'false'
     }
 
     handleResize(gameSize) {
         const width = gameSize.width
         const height = gameSize.height
-        
-        
+
+
         // Update camera
         this.cameras.main.setViewport(0, 0, width, height)
-        
+
         // Calculate scale factor for UI elements
         const scaleFactor = Math.min(width / 1280, height / 820)
-        
+
         // Update ground platforms if they exist
         if (this.platformGroup) {
             const groundY = height - 64
-            
+
             this.platformGroup.getChildren().forEach((platform, index) => {
                 const x = index * width
                 platform.x = x
@@ -364,15 +385,15 @@ export default class Game extends Scene {
         if (this.controls) {
             const buttonSize = 60 * scaleFactor
             const padding = 20 * scaleFactor
-            
+
             this.controls.left
                 .setScale(scaleFactor)
                 .setPosition(padding, height - buttonSize - padding)
-            
+
             this.controls.right
                 .setScale(scaleFactor)
                 .setPosition(buttonSize + padding * 2, height - buttonSize - padding)
-            
+
             this.controls.jump
                 .setScale(scaleFactor)
                 .setPosition(width - buttonSize - padding, height - buttonSize - padding)
@@ -385,7 +406,7 @@ export default class Game extends Scene {
 
         // Update world bounds
         this.physics.world.setBounds(0, 0, width * GAME_TOTAL_WIDTH_SCREENS_MULTIPLIER, height)
-        
+
         // Update camera bounds
         this.cameras.main.setBounds(0, 0, width * GAME_TOTAL_WIDTH_SCREENS_MULTIPLIER, height)
 
@@ -401,7 +422,7 @@ export default class Game extends Scene {
         star.destroy(false)
         this.updateScore(this.coinScore + 1)
     }
-    
+
     levelComplete() {
         // Notify level manager to progress to next level
         //this.scene.get('LevelManager').startLevel(this.currentLevel + 1)
@@ -421,7 +442,7 @@ export default class Game extends Scene {
     background(frame) {
         const width = this.scale.gameSize.width
         const height = this.scale.gameSize.height
-        
+
         if (width <= 0 || height <= 0) {
             console.log(`Invalid dimensions for ${frame}: ${width}x${height}`)
             return null
@@ -482,5 +503,102 @@ export default class Game extends Scene {
         this.coinScore = newScore
         this.coinCounter.setText(`${this.coinScore}`)
         localStorage.setItem('coinScore', this.coinScore.toString())
+    }
+
+    spawnInitialPortals() {
+        const totalWidth = this.game.config.width * GAME_TOTAL_WIDTH_SCREENS_MULTIPLIER;
+        let currentPosition = 1000; // Start after initial gameplay area
+
+        while (currentPosition < totalWidth - 1000) { // Stop before end
+            if (Math.random() < this.portalChance) {
+                this.createPortal(currentPosition);
+            }
+            currentPosition += this.minPortalSpacing;
+        }
+    }
+
+    createPortal(x) {
+        const groundY = this.scale.height - 64;
+        const portal = this.minigamePortals.create(x, groundY - 300, 'ponygirl', 'castle_unicorn');
+        portal.setScale(0.6)
+        portal.body.setSize(400, 300)
+        this.physics.add.existing(portal)
+
+        // Make the portal static so it doesn't fall
+        portal.body.setAllowGravity(false);
+        portal.body.setImmovable(false);        
+
+        // Randomly assign a mini-game type to this portal
+        portal.minigameType = this.getRandomMinigame();
+        portal.setDepth(15);
+    }
+
+    getRandomMinigame() {
+        const minigames = [
+            'jumpChallenge'/*,
+            'collectCoins',
+            'avoidObstacles',*/
+            // Add more mini-game types here
+        ];
+        return minigames[Math.floor(Math.random() * minigames.length)];
+    }
+
+    enterMinigame(player, portal) {
+        // Prevent multiple triggers
+        if (portal.triggered) return;
+        portal.triggered = true;
+
+        // Pause main game mechanics
+        //this.player.freeze();
+        this.physics.pause();
+        if (this.bgMusic) this.bgMusic.pause();
+
+        // Start the mini-game scene
+        this.scene.launch(portal.minigameType, {
+            parentScene: this,
+            onComplete: (score) => {
+                this.handleMinigameComplete(score);
+            }
+        });
+
+        // Hide the portal
+        portal.destroy();
+    }
+
+    handleMinigameComplete(score) {
+        // Resume main game
+        this.physics.resume();
+        if (this.isMusicEnabled()) this.bgMusic.resume();
+
+        // Award points from mini-game
+        if (score > 0) {
+            this.updateScore(this.coinScore + score);
+
+            // Show score popup
+            this.showScorePopup(score);
+        }
+    }
+
+    showScorePopup(score) {
+        const popup = this.add.text(
+            this.player.x,
+            this.player.y - 50,
+            `+${score}`,
+            {
+                fontSize: '32px',
+                fontFamily: 'Arial',
+                color: '#ffff00',
+                stroke: '#000000',
+                strokeThickness: 4
+            }
+        );
+
+        this.tweens.add({
+            targets: popup,
+            y: popup.y - 100,
+            alpha: 0,
+            duration: 1500,
+            onComplete: () => popup.destroy()
+        });
     }
 }

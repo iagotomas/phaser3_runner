@@ -1,6 +1,7 @@
 import Boot from './scenes/boot'
 import Preload from './scenes/preload'
 import Game from './scenes/game'
+import JumpChallenge from './scenes/minigames/jumpChallenge'
 import Phaser from 'phaser'
 
 // Reference resolution (design size)
@@ -15,7 +16,9 @@ const height = window.innerHeight
 const zoom = Math.min(width / GAME_WIDTH, height / GAME_HEIGHT)
 
 export default {
-    type: Phaser.AUTO,
+    type: Phaser.CANVAS,
+    width: GAME_WIDTH,
+    height: GAME_HEIGHT,
     scale: {
         mode: Phaser.Scale.FIT,
         parent: 'game',
@@ -23,6 +26,7 @@ export default {
         height: GAME_HEIGHT,
         autoCenter: Phaser.Scale.CENTER_BOTH,
         orientation: Phaser.Scale.LANDSCAPE,
+        lockOrientation: true,
         min: {
             width: 480,
             height: 270
@@ -52,14 +56,5 @@ export default {
         antialias: false,
         pixelArt: true
     },
-    callbacks: {
-        preBoot: function (game) {
-            if (screen.orientation && screen.orientation.lock) {
-                screen.orientation.lock('landscape').catch(() => {
-                    console.log('Screen orientation lock failed')
-                })
-            }
-        }
-    },
-    scene: [ Boot, Preload, Game ]
+    scene: [ Boot, Preload, Game, JumpChallenge ]
 }
