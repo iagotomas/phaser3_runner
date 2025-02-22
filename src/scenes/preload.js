@@ -153,6 +153,7 @@ export default class Preload extends Scene {
         this.load.image('bg-1-02', 'assets/background/level1/Layers/layer04.png')
         this.load.image('bg-1-03', 'assets/background/level1/Layers/layer03.png')
         this.load.image('bg-1-04', 'assets/background/level1/Layers/layer02.png')
+        this.load.image('bg-1-05', 'assets/background/level1/Layers/layer01.png')
         
         // Load cosmetic items
         this.load.image('hat1', 'assets/cosmetics/party-hat.png')

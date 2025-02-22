@@ -1,16 +1,15 @@
 import { Scene } from 'phaser';
-import Player from '../../objects/player';
 
-export default class JumpChallenge extends Scene {
+export default class MazeChallenge extends Scene {
     constructor() {
-        super('jumpChallenge');
+        super('mazeChallenge');
     }
 
     create(data) {
         this.parentScene = data.parentScene;
         this.onComplete = data.onComplete;
         this.score = 0;
-        this.timeLeft = 90; // 30 seconds to complete
+        this.timeLeft = 120; // 30 seconds to complete
         this.keys = this.parentScene.keys;
 
         // Create background
@@ -18,32 +17,49 @@ export default class JumpChallenge extends Scene {
             .setOrigin(0, 0)
             .setDisplaySize(this.scale.width, this.scale.height);
 
-        // Define maze boundaries (can be passed through data)
+        // Update scale factor calculation to be more robust
+        const scaleFactor = Math.min(
+            this.scale.width / 600,
+            this.scale.height / 460
+        );
+
+        // Update maze boundaries with more conservative margins
         this.mazeBounds = {
-            x: 106,  // left margin
-            y: 65,  // top margin
-            width: this.scale.width - 172 - 10,  // total width minus margins
-            height: this.scale.height - 130 - 10  // total height minus margins
+            x: Math.max(74 * scaleFactor, this.scale.width * 0.1),  // At least 10% margin
+            y: Math.max(58 * scaleFactor, this.scale.height * 0.1), // At least 10% margin
+            width: this.scale.width - Math.max(132 * scaleFactor, this.scale.width * 0.2),  // Max 80% width
+            height: this.scale.height - Math.max(110 * scaleFactor, this.scale.height * 0.2)  // Max 80% height
         };
 
-        // Create maze walls with the defined boundaries
+        // Create maze walls before player
         this.createMaze();
 
-        // Adjust player starting position to be within maze bounds
+        // Find a valid position for the goal (on a path, not a wall)
+        const validPosition = this.findValidGoalPosition();
+        
+        // Create goal at valid position
+        this.goal = this.add.image(validPosition.x, validPosition.y, 'maze', 'maze_hole');
+        this.goal.setDepth(0); // Set hole to render below the player
+
+        // Find the opposite position for the player
+        const playerStartPos = this.findOppositePlayerPosition(validPosition);
+        
+        // Create player at the opposite position
         this.player = this.physics.add.sprite(
-            this.mazeBounds.x + this.cellSize * 2,
-            this.mazeBounds.y + this.cellSize * 2,
-            'maze',
-            'maze_marble_unicorn'
+            playerStartPos.x,
+            playerStartPos.y,
+            'maze'
         );
         this.anims.create({
             key: 'marble_roll',
             frames: this.anims.generateFrameNames('maze', {prefix: 'maze_marble_',start:1, end: 2, zeroPad: 2 }),
             frameRate: 8,
-            repeat: -1
+            repeat: -1,
+            paused: true  // Start paused initially
         });
         this.player.play('marble_roll');
-        this.player.setCircle(12);
+        this.player.anims.pause();  // Ensure animation starts paused
+        this.player.setCircle(13, 1, 1);
         this.player.setBounce(0.8);
         this.player.setCollideWorldBounds(true);
         this.player.setDamping(true);
@@ -51,12 +67,8 @@ export default class JumpChallenge extends Scene {
         this.player.setFriction(0.2);
         this.player.body.setGravityY(300);
 
-        // Find a valid position for the goal (on a path, not a wall)
-        const validPosition = this.findValidGoalPosition();
-        
-        // Create goal at valid position
-        this.goal = this.add.image(validPosition.x, validPosition.y, 'maze', 'maze_hole');
-        this.physics.add.existing(this.goal, true);
+        // Add the player after the goal so it renders on top
+        this.player.setDepth(1);
 
         // Add collision between player and walls
         this.physics.add.collider(this.player, this.walls);
@@ -67,7 +79,7 @@ export default class JumpChallenge extends Scene {
         }
 
         // Timer text
-        this.timerText = this.add.text(16, 16, 'Time: 30', {
+        this.timerText = this.add.text(16, 16, `${this.timeLeft}s`, {
             fontSize: '32px',
             fill: '#fff'
         });
@@ -87,10 +99,10 @@ export default class JumpChallenge extends Scene {
         // Calculate scale factor for UI elements
         const scaleFactor = Math.min(this.scale.width / 1280, this.scale.height / 820);
         // Define grid size for maze
-        const cellSize = 30 * scaleFactor;
+        const cellSize = 40 * scaleFactor;
         // Calculate grid dimensions based on available space
-        const gridWidth = Math.floor(this.mazeBounds.width / cellSize) - 2;
-        const gridHeight = Math.floor(this.mazeBounds.height / cellSize) - 2;
+        const gridWidth = Math.floor(this.mazeBounds.width / cellSize);
+        const gridHeight = Math.floor(this.mazeBounds.height / cellSize);
 
         // Store cellSize for other methods
         this.cellSize = cellSize;
@@ -134,12 +146,13 @@ export default class JumpChallenge extends Scene {
             for (let col = 0; col < gridWidth; col++) {
                 if (!grid[row][col]) {
                     const wall = this.add.rectangle(
-                        this.mazeBounds.x + (col + 1) * cellSize,
-                        this.mazeBounds.y + (row + 1) * cellSize,
+                        this.mazeBounds.x + col * cellSize,
+                        this.mazeBounds.y + row * cellSize,
                         cellSize,
                         cellSize,
-                        0x8B4513
+                        0xff7854
                     );
+                    wall.setStrokeStyle(1, 0x000000);
                     wall.setOrigin(0, 0);
                     this.walls.add(wall);
                 }
@@ -148,7 +161,8 @@ export default class JumpChallenge extends Scene {
         
         // Add invisible border walls with adjusted positions
         const addBorderWall = (x, y, width, height) => {
-            const wall = this.add.rectangle(x, y, width, height, 0x000000);
+            const wall = this.add.rectangle(x, y, width, height, 0x8B4513);
+            wall.setOrigin(0, 0);
             wall.setAlpha(0);
             this.walls.add(wall);
         };
@@ -161,18 +175,48 @@ export default class JumpChallenge extends Scene {
     }
 
     handleOrientation(event) {
-        const beta = event.beta; // X-axis rotation (-180 to 180)
-        const gamma = event.gamma; // Y-axis rotation (-90 to 90)
+        // Get window orientation using Screen Orientation API
+        const screenOrientation = screen.orientation?.angle || 0;
 
-        // Apply force to the ball based on device tilt
-        const forceMultiplier = 15;
-        this.player.setVelocityX(gamma * forceMultiplier);
-        this.player.setVelocityY(beta * forceMultiplier);
+        // Adjust beta and gamma based on screen orientation
+        let beta = Math.min(90, Math.max(-90, event.beta)); // Forward/back tilt
+        let gamma = Math.min(90, Math.max(-90, event.gamma)); // Left/right tilt
+
+        // Adjust controls based on screen orientation
+        if (Math.abs(screenOrientation) === 90) {
+            // In landscape mode, swap beta and gamma
+            const temp = beta;
+            beta = (screenOrientation === 90) ? -gamma : gamma;
+            gamma = (screenOrientation === 90) ? -temp : temp;
+        }
+
+        // Convert angles to forces
+        const forceMultiplier = 20;
+        this.player.setVelocityX(-gamma * forceMultiplier);
+        this.player.setVelocityY((beta / 90) * forceMultiplier * 15);
+
+        // Calculate the total velocity magnitude
+        const velocity = Math.sqrt(
+            Math.pow(this.player.body.velocity.x, 2) + 
+            Math.pow(this.player.body.velocity.y, 2)
+        );
+
+        // Adjust animation based on velocity
+        if (velocity < 10) {
+            this.player.anims.pause();
+        } else {
+            if (this.player.anims.isPaused) {
+                this.player.anims.resume();
+            }
+            // Adjust animation speed based on velocity
+            const newFrameRate = Math.min(16, Math.max(8, velocity / 20));
+            this.player.anims.setFrameRate(newFrameRate);
+        }
     }
 
     updateTimer() {
         this.timeLeft--;
-        this.timerText.setText(`Time: ${this.timeLeft}`);
+        this.timerText.setText(`${this.timeLeft}s`);
         
         if (this.timeLeft <= 0) {
             this.endGame(false);
@@ -180,12 +224,26 @@ export default class JumpChallenge extends Scene {
     }
 
     update() {
-        // Check if player reached the goal
+        // Replace the existing collision check with this new version
         if (Phaser.Geom.Intersects.CircleToCircle(
             new Phaser.Geom.Circle(this.player.x, this.player.y, 15),
             new Phaser.Geom.Circle(this.goal.x, this.goal.y, 30)
         )) {
-            this.endGame(true);
+            // Stop the ball's movement
+            this.player.setVelocity(0, 0);
+            this.player.body.allowGravity = false;
+            
+            // Play falling animation
+            this.tweens.add({
+                targets: this.player,
+                scale: 0.2,
+                angle: 360,
+                duration: 500,
+                onComplete: () => {
+                    this.player.setVisible(false);
+                    this.endGame(true);
+                }
+            });
         }
     }
 
@@ -220,8 +278,8 @@ export default class JumpChallenge extends Scene {
             for (let col = startCol; col < this.mazeGrid[0].length; col++) {
                 if (this.mazeGrid[row][col]) {
                     return {
-                        x: this.mazeBounds.x + (col + 1) * this.cellSize + this.cellSize/2,
-                        y: this.mazeBounds.y + (row + 1) * this.cellSize + this.cellSize/2
+                        x: this.mazeBounds.x + col * this.cellSize + this.cellSize/2,
+                        y: this.mazeBounds.y + row * this.cellSize + this.cellSize/2
                     };
                 }
             }
@@ -231,6 +289,37 @@ export default class JumpChallenge extends Scene {
         return {
             x: this.scale.width - 100,
             y: this.scale.height - 100
+        };
+    }
+
+    findOppositePlayerPosition(goalPos) {
+        // Calculate grid positions
+        const goalGridCol = Math.floor((goalPos.x - this.mazeBounds.x) / this.cellSize);
+        const goalGridRow = Math.floor((goalPos.y - this.mazeBounds.y) / this.cellSize);
+        
+        // Start search from the opposite corner (top-left if goal is bottom-right)
+        let startRow = 1;
+        let startCol = 1;
+        
+        // Search for the first valid path position
+        for (let row = startRow; row < this.mazeGrid.length; row++) {
+            for (let col = startCol; col < this.mazeGrid[0].length; col++) {
+                if (this.mazeGrid[row][col] && 
+                    // Ensure it's far enough from the goal
+                    Math.abs(row - goalGridRow) > this.mazeGrid.length/2 &&
+                    Math.abs(col - goalGridCol) > this.mazeGrid[0].length/2) {
+                    return {
+                        x: this.mazeBounds.x + col * this.cellSize + this.cellSize/2,
+                        y: this.mazeBounds.y + row * this.cellSize + this.cellSize/2
+                    };
+                }
+            }
+        }
+        
+        // Fallback position if no valid position found
+        return {
+            x: this.mazeBounds.x + this.cellSize * 2,
+            y: this.mazeBounds.y + this.cellSize * 2
         };
     }
 } 

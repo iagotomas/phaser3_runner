@@ -30,7 +30,7 @@ export default class Game extends Scene {
         // Initialize score from localStorage or default to 0
         this.coinScore = parseInt(localStorage.getItem('coinScore')) || 0;
         this.lastCameraScrollX = 0;
-        // Add mini-game related properties
+        // Mini-game related properties
         this.minigamePortals = null;
         this.lastPortalPosition = 0;
         this.minPortalSpacing = 2000; // Minimum pixels between portals
@@ -48,7 +48,7 @@ export default class Game extends Scene {
         }
 
         // Create remaining backgrounds with incremental depth
-        const frames = ['bg-1-01', 'bg-1-02', 'bg-1-03', 'bg-1-04']
+        const frames = ['bg-1-01', 'bg-1-02', 'bg-1-03', 'bg-1-04', 'bg-1-05']
         frames.forEach((frame, index) => {
             const bg = this.background(frame)
             if (bg) {
@@ -96,9 +96,6 @@ export default class Game extends Scene {
                 this.updateScore(this.coinScore + points)
             }
         })
-        // Set depth for clouds and balls
-        this.cloudManager.clouds?.forEach(cloud => cloud.setDepth(15))
-        this.cloudManager.ballGroup?.getChildren().forEach(ball => ball.setDepth(15))
 
         // UI elements should have highest depth
         if (this.coinCounter) this.coinCounter.setDepth(100)
@@ -345,13 +342,13 @@ export default class Game extends Scene {
 
         // Update ground platforms if they exist
         if (this.platformGroup) {
-            const groundY = height - 64
+            const groundY = height - 150
 
             this.platformGroup.getChildren().forEach((platform, index) => {
                 const x = index * width
                 platform.x = x
                 platform.y = groundY
-                platform.setDisplaySize(width, 64)
+                platform.setDisplaySize(width, 150)
                 platform.refreshBody()
                 platform.setDepth(10)
             })
@@ -448,7 +445,6 @@ export default class Game extends Scene {
             return null
         }
 
-        console.log(`Creating background ${frame}: ${width}x${height}`)
         const bg = this.add.tileSprite(0, 0, width, height, frame)
         bg.setOrigin(0, 0)
         bg.setScrollFactor(0)
@@ -468,7 +464,7 @@ export default class Game extends Scene {
         // Only update parallax if camera has moved
         const currentScrollX = this.cameras.main.scrollX
         if (currentScrollX !== this.lastCameraScrollX) {
-            const scrollSpeeds = [0.1, 0.2, 0.3, 0.5, 0.8] //[0.1, 0.3, 0.5, 0.5, 0.6, 0.6, 0.7, 0.7, 0.7, 0.9, 0.9]
+            const scrollSpeeds = [0.1, 0.2, 0.3, 0.5, 0.8, 0.8, 0.9, 0.9] //[0.1, 0.3, 0.5, 0.5, 0.6, 0.6, 0.7, 0.7, 0.7, 0.9, 0.9]
             this.backgrounds.forEach((bg, index) => {
                 if (bg && bg.active && index > 0) {
                     bg.tilePositionX = currentScrollX * scrollSpeeds[index]
@@ -507,7 +503,7 @@ export default class Game extends Scene {
 
     spawnInitialPortals() {
         const totalWidth = this.game.config.width * GAME_TOTAL_WIDTH_SCREENS_MULTIPLIER;
-        let currentPosition = 1000; // Start after initial gameplay area
+        let currentPosition = 1900; // Start after initial gameplay area
 
         while (currentPosition < totalWidth - 1000) { // Stop before end
             if (Math.random() < this.portalChance) {
@@ -535,7 +531,7 @@ export default class Game extends Scene {
 
     getRandomMinigame() {
         const minigames = [
-            'jumpChallenge'/*,
+            'mazeChallenge'/*,
             'collectCoins',
             'avoidObstacles',*/
             // Add more mini-game types here
@@ -551,6 +547,7 @@ export default class Game extends Scene {
         // Pause main game mechanics
         //this.player.freeze();
         this.physics.pause();
+        this.cloudManager.pause();
         if (this.bgMusic) this.bgMusic.pause();
 
         // Start the mini-game scene
@@ -568,6 +565,7 @@ export default class Game extends Scene {
     handleMinigameComplete(score) {
         // Resume main game
         this.physics.resume();
+        this.cloudManager.resume();
         if (this.isMusicEnabled()) this.bgMusic.resume();
 
         // Award points from mini-game

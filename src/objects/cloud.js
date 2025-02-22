@@ -5,8 +5,8 @@ export default class CloudManager {
         this.scene = scene
         this.config = {
             cloudCount: config.cloudCount || 10,
-            minDropDelay: config.minDropDelay || 1000,
-            maxDropDelay: config.maxDropDelay || 2000,
+            minDropDelay: config.minDropDelay || 0,
+            maxDropDelay: config.maxDropDelay || 500,
             groundDelay: 8000, // Time to wait on ground before disappearing
             onBallCollect: config.onBallCollect || null,
             depth: config.depth || 15,
@@ -23,10 +23,6 @@ export default class CloudManager {
         })
         this.initialize()
 
-        // Add screen bounds for balls
-        const width = scene.scale.width;
-        const height = scene.scale.height;
-        
         // Configure ball physics
         this.ballGroup.getChildren().forEach(ball => {
             ball.body.setCollideWorldBounds(true);
@@ -56,8 +52,8 @@ export default class CloudManager {
         const clouds = ['cloud_aaa', 'cloud_aab', 'cloud_aac', 'cloud_aad', 'cloud_aae']//, 'cloud_big_aaa']
         const random = Math.floor(Math.random() * clouds.length);
         const cloud = this.cloudGroup.create(
-            this.scene.cameras.main.scrollX + this.scene.game.config.width + 200, 
-            Phaser.Math.Between(40, 150), 
+            this.scene.cameras.main.scrollX + this.scene.game.config.width + 400, 
+            Phaser.Math.Between(40, 250), 
             'ponygirl',
             clouds[random]
             
@@ -210,7 +206,27 @@ export default class CloudManager {
         return ball;
     }
 
+    pause() {
+        this.cloudGroup.children.entries.forEach(cloud => {
+            if(cloud.dropTimer) {
+                cloud.dropTimer.remove()
+            }
+        })
+        this.isPaused = true  // Add state tracking
+    }
+
+    resume() {
+        this.cloudGroup.children.entries.forEach(cloud => {
+            if(cloud.dropTimer) {   
+                cloud.dropTimer = this.setupCloudDropping(cloud)
+            }
+        })
+        this.isPaused = false
+    }
+
     update() {
+        if (this.isPaused) return  // Skip updates when paused
+        
         // Optimize cloud updates by using a for loop and caching camera scroll
         const cameraScrollX = this.scene.cameras.main.scrollX
         const clouds = this.cloudGroup.children.entries

@@ -1,4 +1,10 @@
 export default class ShopUI extends Phaser.GameObjects.Container {
+    /**
+     * Create a shop ui
+     * @param {Phaser.Scene} scene Parent scene
+     * @param {number} x Origin x position, defaults to 0
+     * @param {number} y Origin y position, defaults to 0
+     */
     constructor(scene, x = 0, y = 0) {
         super(scene, x, y);
         this.visible = false;

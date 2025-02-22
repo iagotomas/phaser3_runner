@@ -1,12 +1,12 @@
 import Boot from './scenes/boot'
 import Preload from './scenes/preload'
 import Game from './scenes/game'
-import JumpChallenge from './scenes/minigames/jumpChallenge'
+import MazeChallenge from './scenes/minigames/mazeChallenge'
 import Phaser from 'phaser'
 
 // Reference resolution (design size)
-const GAME_WIDTH = 1280
-const GAME_HEIGHT = 820
+const GAME_WIDTH = 1920//window.innerWidth>window.innerHeight?window.innerWidth:window.innerHeight//1280
+const GAME_HEIGHT = 1080//window.innerWidth>window.innerHeight?window.innerHeight:window.innerWidth //820
 
 // Get initial window dimensions
 const width = window.innerWidth
@@ -56,5 +56,5 @@ export default {
         antialias: false,
         pixelArt: true
     },
-    scene: [ Boot, Preload, Game, JumpChallenge ]
+    scene: [ Boot, Preload, Game, MazeChallenge ]
 }
