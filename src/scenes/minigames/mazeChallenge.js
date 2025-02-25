@@ -1,15 +1,34 @@
 import { Scene } from 'phaser';
 
+/**
+ * MazeChallenge class represents the maze minigame in the game.
+ * It handles the creation and management of the maze game elements,
+ * including the maze walls, player, goal, and timer.
+ */ 
 export default class MazeChallenge extends Scene {
     constructor() {
         super('mazeChallenge');
+
+        // Initialize properties
+        this.score = 0;
+        this.timeLeft = 60; // Set to 60 seconds for the game
+        this.keys = null; // Initialize keys, will be set in create
+
+        // Setup device orientation controls
+        if (window.DeviceOrientationEvent) {
+            window.addEventListener('deviceorientation', (event) => this.handleOrientation(event));
+        }
     }
 
+    /**
+     * Creates the maze game elements and initializes the game state.
+     * @param {Object} data - Data passed from the parent scene.
+     * @param {Scene} data.parentScene - Reference to the parent scene.
+     * @param {Function} data.onComplete - Callback function to call when the game ends.
+     */
     create(data) {
         this.parentScene = data.parentScene;
         this.onComplete = data.onComplete;
-        this.score = 0;
-        this.timeLeft = 120; // 30 seconds to complete
         this.keys = this.parentScene.keys;
 
         // Create background
@@ -63,20 +82,15 @@ export default class MazeChallenge extends Scene {
         this.player.setBounce(0.8);
         this.player.setCollideWorldBounds(true);
         this.player.setDamping(true);
-        this.player.setDrag(0.95);
-        this.player.setFriction(0.2);
-        this.player.body.setGravityY(300);
+        this.player.setDrag(0.98);
+        this.player.setFriction(0.5);
+        this.player.body.setGravityY(150);
 
         // Add the player after the goal so it renders on top
         this.player.setDepth(1);
 
         // Add collision between player and walls
         this.physics.add.collider(this.player, this.walls);
-
-        // Setup device orientation controls
-        if (window.DeviceOrientationEvent) {
-            window.addEventListener('deviceorientation', (event) => this.handleOrientation(event));
-        }
 
         // Timer text
         this.timerText = this.add.text(16, 16, `${this.timeLeft}s`, {
@@ -93,6 +107,9 @@ export default class MazeChallenge extends Scene {
         });
     }
 
+    /**
+     * Creates the maze layout and walls based on a generated grid.
+     */
     createMaze() {
         this.walls = this.physics.add.staticGroup();
         
@@ -174,6 +191,10 @@ export default class MazeChallenge extends Scene {
         addBorderWall(this.mazeBounds.x + this.mazeBounds.width - cellSize, this.mazeBounds.y, cellSize, this.mazeBounds.height); // Right
     }
 
+    /**
+     * Handles device orientation events to control player movement.
+     * @param {DeviceOrientationEvent} event - The device orientation event.
+     */
     handleOrientation(event) {
         // Get window orientation using Screen Orientation API
         const screenOrientation = screen.orientation?.angle || 0;
@@ -190,10 +211,10 @@ export default class MazeChallenge extends Scene {
             gamma = (screenOrientation === 90) ? -temp : temp;
         }
 
-        // Convert angles to forces
+        // Invert gamma to change the direction of movement
         const forceMultiplier = 20;
-        this.player.setVelocityX(-gamma * forceMultiplier);
-        this.player.setVelocityY((beta / 90) * forceMultiplier * 15);
+        this.player.setVelocityY(-gamma * forceMultiplier); // Inverted here
+        this.player.setVelocityX((beta / 90) * forceMultiplier * 15);
 
         // Calculate the total velocity magnitude
         const velocity = Math.sqrt(
@@ -214,6 +235,9 @@ export default class MazeChallenge extends Scene {
         }
     }
 
+    /**
+     * Updates the timer and checks for game end conditions.
+     */
     updateTimer() {
         this.timeLeft--;
         this.timerText.setText(`${this.timeLeft}s`);
@@ -223,8 +247,27 @@ export default class MazeChallenge extends Scene {
         }
     }
 
+    /**
+     * Updates the game state, including collision detection between player and goal.
+     */
     update() {
-        // Replace the existing collision check with this new version
+        // Add alternative controls using this.keys
+        if (this.keys.left.isDown) {
+            this.player.setVelocityX(-200); // Move left
+        } else if (this.keys.right.isDown) {
+            this.player.setVelocityX(200); // Move right
+        } else {
+            this.player.setVelocityX(0); // Stop horizontal movement
+        }
+
+        if (this.keys.up.isDown) {
+            this.player.setVelocityY(-200); // Move up
+        } else if (this.keys.down.isDown) {
+            this.player.setVelocityY(200); // Move down
+        } else {
+            this.player.setVelocityY(0); // Stop vertical movement
+        }
+
         if (Phaser.Geom.Intersects.CircleToCircle(
             new Phaser.Geom.Circle(this.player.x, this.player.y, 15),
             new Phaser.Geom.Circle(this.goal.x, this.goal.y, 30)
@@ -247,6 +290,10 @@ export default class MazeChallenge extends Scene {
         }
     }
 
+    /**
+     * Ends the game, displaying the result and invoking the callback.
+     * @param {boolean} success - Indicates if the game was successful.
+     */
     endGame(success) {
         // Stop the timer
         this.timer.remove();
@@ -268,6 +315,10 @@ export default class MazeChallenge extends Scene {
         });
     }
 
+    /**
+     * Finds a valid position for the goal within the maze.
+     * @returns {Object} - The position of the goal with x and y coordinates.
+     */
     findValidGoalPosition() {
         // Start from the bottom-right quarter of the maze
         const startRow = Math.floor(this.mazeGrid.length * 3/4);
@@ -292,6 +343,11 @@ export default class MazeChallenge extends Scene {
         };
     }
 
+    /**
+     * Finds a position for the player that is opposite to the goal.
+     * @param {Object} goalPos - The position of the goal.
+     * @returns {Object} - The position of the player with x and y coordinates.
+     */
     findOppositePlayerPosition(goalPos) {
         // Calculate grid positions
         const goalGridCol = Math.floor((goalPos.x - this.mazeBounds.x) / this.cellSize);

@@ -147,6 +147,7 @@ export default class Preload extends Scene {
         this.load.image('ground', 'assets/platform-cake.png')
         this.load.image('platform', 'assets/background/level1/Layers/layer01.png')
         this.load.image('shopbg', 'assets/shop_shelf.png')
+        this.load.image('puzzleImage', 'assets/puzzle/splash.png')
         
         this.load.image('sky', 'assets/background/level1/Layers/layer06.png')
         this.load.image('bg-1-01', 'assets/background/level1/Layers/layer05.png')
@@ -161,6 +162,7 @@ export default class Preload extends Scene {
         this.load.image('hat3', 'assets/cosmetics/cowboy.png')
         this.load.image('hat4', 'assets/cosmetics/princess_crown.png')
         this.load.image('hat5', 'assets/cosmetics/pirate-hat.png')
+        this.load.image('hat6', 'assets/cosmetics/tall-hat.png')
         this.load.image('star', 'assets/particles/star.png')
 
         // Load background music

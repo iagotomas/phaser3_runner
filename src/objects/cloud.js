@@ -5,7 +5,7 @@ export default class CloudManager {
         this.scene = scene
         this.config = {
             cloudCount: config.cloudCount || 10,
-            minDropDelay: config.minDropDelay || 0,
+            minDropDelay: config.minDropDelay || 5,
             maxDropDelay: config.maxDropDelay || 500,
             groundDelay: 8000, // Time to wait on ground before disappearing
             onBallCollect: config.onBallCollect || null,
@@ -217,7 +217,7 @@ export default class CloudManager {
 
     resume() {
         this.cloudGroup.children.entries.forEach(cloud => {
-            if(cloud.dropTimer) {   
+            if(!cloud.dropTimer) {   
                 cloud.dropTimer = this.setupCloudDropping(cloud)
             }
         })

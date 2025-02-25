@@ -1,5 +1,4 @@
 import { Scene } from 'phaser'
-import StateMachine from '../objects/statemachine'
 import Player from '../objects/player'
 import CloudManager from '../objects/cloud'
 import ShopUI from '../objects/shopui'
@@ -14,6 +13,7 @@ import ShopUI from '../objects/shopui'
     1000: Shop UI and overlays
  */
 const GAME_TOTAL_WIDTH_SCREENS_MULTIPLIER = 100
+const GROUND_SEGMENT_WIDTH = 142
 export default class Game extends Scene {
     constructor() {
         super('game')
@@ -34,7 +34,7 @@ export default class Game extends Scene {
         this.minigamePortals = null;
         this.lastPortalPosition = 0;
         this.minPortalSpacing = 2000; // Minimum pixels between portals
-        this.portalChance = 0.3; // 30% chance to spawn a portal when possible
+        this.portalChance = 0.9; // 30% chance to spawn a portal when possible
     }
     
     create() {
@@ -60,8 +60,8 @@ export default class Game extends Scene {
         // Create platforms with higher depth than backgrounds
         this.platformGroup = this.physics.add.staticGroup()
 
-        const groundY = this.scale.height - 64
-        const segmentWidth = 142 //this.scale.width
+        const groundY = this.scale.height - 24
+        const segmentWidth = GROUND_SEGMENT_WIDTH //this.scale.width
 
 
         // Create visible debug rectangle to show where platform should be
@@ -69,10 +69,11 @@ export default class Game extends Scene {
         //debugRect.setOrigin(0, 0)
         //debugRect.setDepth(10)
 
+        console.log(`this.scale.height: ${this.scale.height}, groundY: ${groundY}`)
         for (let x = 0; x < this.scale.width * 3; x += segmentWidth) {
             const groundSegment = this.platformGroup.create(x, groundY, 'ground')
             groundSegment.setOrigin(0, 0)
-            groundSegment.setDisplaySize(segmentWidth, 74)
+            groundSegment.setDisplaySize(segmentWidth, 24)
             groundSegment.refreshBody()
             groundSegment.setImmovable(true)
             groundSegment.setDepth(10)
@@ -116,9 +117,9 @@ export default class Game extends Scene {
         console.log('Game setup complete')
 
         // Remove or comment out fullscreen handling
-        /* this.input.on('pointerup', () => {
+        this.input.on('pointerup', () => {
             this.scale.startFullscreen()
-        }, this) */
+        }, this) 
 
         // Score display with persistent value
         this.coinCounter = this.add.text(20, 20, `${this.coinScore}`, {
@@ -183,7 +184,7 @@ export default class Game extends Scene {
             .on('pointerdown', () => this.openShop(), this)
             .setDepth(100)
 
-        // Replace shop UI creation with:
+        // Create shop UI
         this.shopUI = new ShopUI(this)
 
         // Add background music
@@ -342,13 +343,13 @@ export default class Game extends Scene {
 
         // Update ground platforms if they exist
         if (this.platformGroup) {
-            const groundY = height - 150
+            const groundY = height - 56
 
             this.platformGroup.getChildren().forEach((platform, index) => {
-                const x = index * width
+                const x = index * GROUND_SEGMENT_WIDTH
                 platform.x = x
                 platform.y = groundY
-                platform.setDisplaySize(width, 150)
+                platform.setDisplaySize(GROUND_SEGMENT_WIDTH, 56)
                 platform.refreshBody()
                 platform.setDepth(10)
             })
@@ -515,9 +516,9 @@ export default class Game extends Scene {
 
     createPortal(x) {
         const groundY = this.scale.height - 64;
-        const portal = this.minigamePortals.create(x, groundY - 300, 'ponygirl', 'castle_unicorn');
-        portal.setScale(0.6)
-        portal.body.setSize(400, 300)
+        const portal = this.minigamePortals.create(x, groundY - 370, 'ponygirl', 'castle_unicorn');
+        portal.setScale(0.9)
+        portal.body.setSize(200, 600)
         this.physics.add.existing(portal)
 
         // Make the portal static so it doesn't fall
@@ -531,6 +532,7 @@ export default class Game extends Scene {
 
     getRandomMinigame() {
         const minigames = [
+            //'puzzleChallenge',
             'mazeChallenge'/*,
             'collectCoins',
             'avoidObstacles',*/

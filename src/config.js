@@ -2,6 +2,7 @@ import Boot from './scenes/boot'
 import Preload from './scenes/preload'
 import Game from './scenes/game'
 import MazeChallenge from './scenes/minigames/mazeChallenge'
+import PuzzleChallenge from './scenes/minigames/puzzleChallenge'
 import Phaser from 'phaser'
 
 // Reference resolution (design size)
@@ -40,7 +41,7 @@ export default {
     pixelArt: true,
     backgroundColor: 'rgb(0, 0, 0)',
     fps: {
-        target: 60,
+        target: 30,
         forceSetTimeOut: false
     },
     physics: {
@@ -48,7 +49,7 @@ export default {
         arcade: {
             gravity: { y: 300 },
             debug: false,
-            fps: 60
+            fps: 30
         }
     },
     render: {
@@ -56,5 +57,5 @@ export default {
         antialias: false,
         pixelArt: true
     },
-    scene: [ Boot, Preload, Game, MazeChallenge ]
+    scene: [ Boot, Preload, Game, MazeChallenge, PuzzleChallenge ]
 }

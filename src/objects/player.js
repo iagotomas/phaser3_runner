@@ -22,7 +22,7 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
         const targetHeight = 310
         // Adjust physics body size (make it smaller than visual size)
         this.body.setSize(targetWidth * 0.6, targetHeight * 0.5)
-        this.body.setOffset(targetWidth * 0.05, targetHeight * 0.15)
+        this.body.setOffset(targetWidth * 0.05, targetHeight * 0.18)
 
         const anims = scene.anims
         const key = texture
@@ -111,7 +111,7 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
                 lifespan: 1000,
                 speed: { min: 0, max: 20 },
                 angle: { min: 0, max: 360 },
-                blendMode: 'ADD'
+                blendMode: Phaser.BlendModes.ADD
             })
             
             this.trail.setDepth(this.baseDepth - 1) // Make sure trail appears behind player
