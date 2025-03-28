@@ -11,9 +11,9 @@ export default class MazeChallenge extends Scene {
 
         // Initialize properties
         this.score = 0;
-        this.timeLeft = 60; // Set to 60 seconds for the game
+        this.timeLeft = 0; 
         this.keys = null; // Initialize keys, will be set in create
-
+        this.player = null;
         // Setup device orientation controls
         if (window.DeviceOrientationEvent) {
             window.addEventListener('deviceorientation', (event) => this.handleOrientation(event));
@@ -27,10 +27,11 @@ export default class MazeChallenge extends Scene {
      * @param {Function} data.onComplete - Callback function to call when the game ends.
      */
     create(data) {
+        this.timeLeft = 60; // Set to 60 seconds for the game
         this.parentScene = data.parentScene;
         this.onComplete = data.onComplete;
-        this.keys = this.parentScene.keys;
-
+        this.keys = this.input.keyboard.createCursorKeys()//this.parentScene.keys;
+        
         // Create background
         this.add.image(0, 0, 'maze', 'maze_background')
             .setOrigin(0, 0)
@@ -58,6 +59,7 @@ export default class MazeChallenge extends Scene {
         
         // Create goal at valid position
         this.goal = this.add.image(validPosition.x, validPosition.y, 'maze', 'maze_hole');
+        this.goal.setDisplaySize(20, 20);
         this.goal.setDepth(0); // Set hole to render below the player
 
         // Find the opposite position for the player
@@ -251,26 +253,44 @@ export default class MazeChallenge extends Scene {
      * Updates the game state, including collision detection between player and goal.
      */
     update() {
+        // Adjust animation speed based on velocity
+        const newFrameRate = Math.min(16, Math.max(8, 200 / 20));
+        try{
         // Add alternative controls using this.keys
         if (this.keys.left.isDown) {
             this.player.setVelocityX(-200); // Move left
+            this.player.anims.resume();
+            if(this.player.anims) this.player.anims.setFrameRate(newFrameRate);
         } else if (this.keys.right.isDown) {
             this.player.setVelocityX(200); // Move right
+            this.player.anims.resume();
+            if(this.player.anims) this.player.anims.setFrameRate(newFrameRate);
         } else {
             this.player.setVelocityX(0); // Stop horizontal movement
+            this.player.anims.pause();
         }
 
         if (this.keys.up.isDown) {
             this.player.setVelocityY(-200); // Move up
+            this.player.anims.resume();
+            if(this.player.anims)  this.player.anims.setFrameRate(newFrameRate);
         } else if (this.keys.down.isDown) {
             this.player.setVelocityY(200); // Move down
+            this.player.anims.resume();
+            if(this.player.anims) this.player.anims.setFrameRate(newFrameRate);
         } else {
             this.player.setVelocityY(0); // Stop vertical movement
+            this.player.anims.pause();
         }
+            
+        } catch(e){
+            console.log(e);
+        }
+
 
         if (Phaser.Geom.Intersects.CircleToCircle(
             new Phaser.Geom.Circle(this.player.x, this.player.y, 15),
-            new Phaser.Geom.Circle(this.goal.x, this.goal.y, 30)
+            new Phaser.Geom.Circle(this.goal.x, this.goal.y, 20)
         )) {
             // Stop the ball's movement
             this.player.setVelocity(0, 0);

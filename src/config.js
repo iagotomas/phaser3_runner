@@ -3,6 +3,8 @@ import Preload from './scenes/preload'
 import Game from './scenes/game'
 import MazeChallenge from './scenes/minigames/mazeChallenge'
 import PuzzleChallenge from './scenes/minigames/puzzleChallenge'
+import HangmanChallenge from './scenes/minigames/hangmanChallenge'
+import MemoryChallenge from './scenes/minigames/memoryChallenge'
 import Phaser from 'phaser'
 
 // Reference resolution (design size)
@@ -57,5 +59,5 @@ export default {
         antialias: false,
         pixelArt: true
     },
-    scene: [ Boot, Preload, Game, MazeChallenge, PuzzleChallenge ]
+    scene: [ Boot, Preload, Game, MazeChallenge, PuzzleChallenge, HangmanChallenge, MemoryChallenge ]
 }

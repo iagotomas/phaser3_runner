@@ -70,7 +70,7 @@ export default class Game extends Scene {
         //debugRect.setDepth(10)
 
         console.log(`this.scale.height: ${this.scale.height}, groundY: ${groundY}`)
-        for (let x = 0; x < this.scale.width * 3; x += segmentWidth) {
+        for (let x = 0; x < this.scale.width * GAME_TOTAL_WIDTH_SCREENS_MULTIPLIER; x += segmentWidth) {
             const groundSegment = this.platformGroup.create(x, groundY, 'ground')
             groundSegment.setOrigin(0, 0)
             groundSegment.setDisplaySize(segmentWidth, 24)
@@ -83,6 +83,7 @@ export default class Game extends Scene {
         // Create player with depth above platforms
         this.player = new Player(this, 60, groundY - 480, 'ponygirl')
         this.player.setDepth(20) // Player depth above platforms
+        this.player.setScale(1)
         this.physics.add.collider(this.player, this.platformGroup)
 
         // Set up camera
@@ -161,7 +162,7 @@ export default class Game extends Scene {
         // Add the overlap check
         this.physics.add.overlap(
             this.player,
-            this.cloudManager.ballGroup,  // Use ballGroup instead of clouds
+            this.cloudManager.ballGroup, 
             (player, ball) => this.cloudManager.handleBallCollection(player, ball),
             null,
             this
@@ -533,6 +534,8 @@ export default class Game extends Scene {
     getRandomMinigame() {
         const minigames = [
             //'puzzleChallenge',
+            'hangman',
+            'memory'/*,
             'mazeChallenge'/*,
             'collectCoins',
             'avoidObstacles',*/
@@ -546,22 +549,30 @@ export default class Game extends Scene {
         if (portal.triggered) return;
         portal.triggered = true;
 
-        // Pause main game mechanics
-        //this.player.freeze();
-        this.physics.pause();
-        this.cloudManager.pause();
-        if (this.bgMusic) this.bgMusic.pause();
+        // Scale down the player to simulate entering the portal
+        this.tweens.add({
+            targets: player,
+            scaleX: 0.7,
+            scaleY: 0.7,
+            duration: 500,
+            onComplete: () => {
+                // Pause main game mechanics
+                this.physics.pause();
+                this.cloudManager.pause();
+                if (this.bgMusic) this.bgMusic.pause();
 
-        // Start the mini-game scene
-        this.scene.launch(portal.minigameType, {
-            parentScene: this,
-            onComplete: (score) => {
-                this.handleMinigameComplete(score);
+                // Start the mini-game scene
+                this.scene.launch(portal.minigameType, {
+                    parentScene: this,
+                    onComplete: (score) => {
+                        this.handleMinigameComplete(score);
+                    }
+                });
+
+                // Hide the portal
+                portal.destroy();
             }
         });
-
-        // Hide the portal
-        portal.destroy();
     }
 
     handleMinigameComplete(score) {
@@ -569,6 +580,10 @@ export default class Game extends Scene {
         this.physics.resume();
         this.cloudManager.resume();
         if (this.isMusicEnabled()) this.bgMusic.resume();
+
+        // Reset player's scale when leaving the mini-game
+        this.player.setScale(1);
+        this.player.setPosition(this.player.body.x, this.scale.height - 280); // Adjust the Y position as needed
 
         // Award points from mini-game
         if (score > 0) {

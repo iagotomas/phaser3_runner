@@ -46,8 +46,8 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
         })
         anims.create({
             key: 'idle',
-            frames: anims.generateFrameNames(key, {prefix: 'little_girl_standing_',start:1, end: 3 }),
-            frameRate: 5,
+            frames: anims.generateFrameNames(key, {prefix: 'little_girl_standing_',start:2, end: 5 }),
+            frameRate: 1,
             repeat: -1
         }) 
         //this.setCollideWorldBounds(true)   

@@ -143,6 +143,7 @@ export default class Preload extends Scene {
         // Load rest of game assets
         this.load.atlas('ponygirl', 'assets/game_sprites.png', 'assets/game_sprites.json')
         this.load.atlas('maze', 'assets/maze.png', 'assets/maze.json')
+        this.load.atlas('memory', 'assets/memory/memory.png', 'assets/memory/memory.json')
         this.load.atlas('ponygirl-jump', 'assets/girl_jumping.png', 'assets/girl_jumping.json')
         this.load.image('ground', 'assets/platform-cake.png')
         this.load.image('platform', 'assets/background/level1/Layers/layer01.png')
@@ -156,6 +157,17 @@ export default class Preload extends Scene {
         this.load.image('bg-1-04', 'assets/background/level1/Layers/layer02.png')
         this.load.image('bg-1-05', 'assets/background/level1/Layers/layer01.png')
         
+        // Load Hangman images
+        this.load.image('hangman-01', 'assets/hangman/hangman_01.png')
+        this.load.image('hangman-02', 'assets/hangman/hangman_02.png')
+        this.load.image('hangman-03', 'assets/hangman/hangman_03.png')
+        this.load.image('hangman-04', 'assets/hangman/hangman_04.png')
+        this.load.image('hangman-05', 'assets/hangman/hangman_05.png')
+        this.load.image('hangman-06', 'assets/hangman/hangman_06.png')
+        this.load.image('hangman-07', 'assets/hangman/hangman_07.png')
+        this.load.image('hangman-08', 'assets/hangman/hangman_08.png')
+        
+
         // Load cosmetic items
         this.load.image('hat1', 'assets/cosmetics/party-hat.png')
         this.load.image('hat2', 'assets/cosmetics/crown.png')
