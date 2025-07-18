@@ -218,13 +218,113 @@ export default class CloudManager {
      * @param {Phaser.GameObjects.GameObject} ball - The ball that was collected.
      */
     handleBallCollection(player, ball) {
-        ball.destroy();
-        // Add 3 points for special balls, 1 for regular
-        if (ball.isSpecial) {
-            this.config.onBallCollect(3);
-        } else {
-            this.config.onBallCollect(1);
+        // Check if player's inventory has capacity
+        if (player.isInventoryFull()) {
+            // Show visual feedback for full inventory
+            this.showInventoryFullFeedback(player, ball);
+            return; // Don't collect the ball
         }
+
+        // Add ball to player's inventory
+        const wasAdded = player.addBall();
+        
+        if (wasAdded) {
+            
+            // Still provide score points for collection (maintaining existing behavior)
+            if (ball.isSpecial) {
+                this.config.onBallCollect(3);
+            } else {
+                this.config.onBallCollect(1);
+            }
+            
+            // Show collection feedback
+            this.showCollectionFeedback(player, ball);
+        }
+        // Remove the ball from the game world
+        ball.destroy();
+    }
+
+    /**
+     * Shows visual feedback when inventory is full and ball cannot be collected.
+     * @param {Phaser.GameObjects.GameObject} player - The player game object.
+     * @param {Phaser.GameObjects.GameObject} ball - The ball that couldn't be collected.
+     */
+    showInventoryFullFeedback(player, ball) {
+        // Create a "FULL!" text that appears above the player
+        const fullText = this.scene.add.text(
+            player.x, 
+            player.y - 60, 
+            'INVENTORY FULL!', 
+            {
+                fontSize: '24px',
+                fill: '#ff4444',
+                fontFamily: 'Arial',
+                stroke: '#ffffff',
+                strokeThickness: 2
+            }
+        );
+        
+        fullText.setOrigin(0.5, 0.5);
+        fullText.setDepth(20); // Above other game elements
+        
+        // Animate the text
+        this.scene.tweens.add({
+            targets: fullText,
+            y: fullText.y - 30,
+            alpha: 0,
+            duration: 1500,
+            ease: 'Power2',
+            onComplete: () => {
+                fullText.destroy();
+            }
+        });
+        
+        // Add a bounce effect to the ball to indicate it can't be collected
+        this.scene.tweens.add({
+            targets: ball,
+            scaleX: ball.scaleX * 1.2,
+            scaleY: ball.scaleY * 1.2,
+            duration: 200,
+            yoyo: true,
+            ease: 'Power2'
+        });
+    }
+
+    /**
+     * Shows visual feedback when a ball is successfully collected.
+     * @param {Phaser.GameObjects.GameObject} player - The player game object.
+     * @param {Phaser.GameObjects.GameObject} ball - The ball that was collected.
+     */
+    showCollectionFeedback(player, ball) {
+        // Create a "+1" or "+3" text that appears at the ball's position
+        const points = ball.isSpecial ? 3 : 1;
+        const collectText = this.scene.add.text(
+            ball.x, 
+            ball.y, 
+            `+${points}`, 
+            {
+                fontSize: ball.isSpecial ? '28px' : '20px',
+                fill: ball.isSpecial ? '#ffaa00' : '#00ff00',
+                fontFamily: 'Arial',
+                stroke: '#ffffff',
+                strokeThickness: 2
+            }
+        );
+        
+        collectText.setOrigin(0.5, 0.5);
+        collectText.setDepth(20); // Above other game elements
+        
+        // Animate the text floating up and fading out
+        this.scene.tweens.add({
+            targets: collectText,
+            y: collectText.y - 40,
+            alpha: 0,
+            duration: 1000,
+            ease: 'Power2',
+            onComplete: () => {
+                collectText.destroy();
+            }
+        });
     }
 
     /**

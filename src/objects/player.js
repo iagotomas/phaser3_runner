@@ -2,6 +2,7 @@ import Phaser, {Scene} from 'phaser'
 import State from '../objects/state'
 import StateMachine from '../objects/statemachine'
 import CustomizationManager from '../objects/customization'
+import BallInventory from '../objects/ballInventory'
 
 export default class Player extends Phaser.Physics.Arcade.Sprite {
   /**
@@ -69,6 +70,9 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
 
         // Add customization manager
         this.customization = new CustomizationManager()
+        
+        // Initialize ball inventory for ammunition management
+        this.ballInventory = new BallInventory(scene)
         
         // Initialize cosmetics
         this.hat = null
@@ -150,6 +154,56 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
 
     step() {
         this.stateMachine.step()
+    }
+
+    // Ball inventory access methods
+    
+    /**
+     * Gets the player's ball inventory instance
+     * @returns {BallInventory} - The player's ball inventory
+     */
+    getInventory() {
+        return this.ballInventory
+    }
+
+    /**
+     * Adds a ball to the player's inventory
+     * @returns {boolean} - True if ball was successfully added, false if inventory is full
+     */
+    addBall() {
+        return this.ballInventory.addBall()
+    }
+
+    /**
+     * Removes a ball from the player's inventory
+     * @returns {boolean} - True if ball was successfully removed, false if inventory is empty
+     */
+    removeBall() {
+        return this.ballInventory.removeBall()
+    }
+
+    /**
+     * Gets the current ball count in the player's inventory
+     * @returns {number} - Current number of balls in inventory
+     */
+    getBallCount() {
+        return this.ballInventory.getCount()
+    }
+
+    /**
+     * Checks if the player's inventory is full
+     * @returns {boolean} - True if inventory is at maximum capacity
+     */
+    isInventoryFull() {
+        return this.ballInventory.isFull()
+    }
+
+    /**
+     * Checks if the player's inventory is empty
+     * @returns {boolean} - True if inventory has no balls
+     */
+    isInventoryEmpty() {
+        return this.ballInventory.isEmpty()
     }
 }
 

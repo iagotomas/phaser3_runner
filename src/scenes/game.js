@@ -535,7 +535,7 @@ export default class Game extends Scene {
         const minigames = [
             //'puzzleChallenge',
             'hangman',
-            'memory'/*,
+            /*'memory',
             'mazeChallenge'/*,
             'collectCoins',
             'avoidObstacles',*/

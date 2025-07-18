@@ -1,4 +1,5 @@
 import { Scene } from 'phaser';
+import { hangmanWords } from './hangmanWords.js';
 
 const fontFamily = 'Tahoma, sans-serif'
 /**
@@ -16,6 +17,7 @@ export default class HangmanChallenge extends Scene {
         this.maxIncorrectGuesses = 7;// Maximum allowed incorrect guesses.
         this.onComplete = null;   // Callback function to be executed when the game ends.
         this.parentScene = null;  // Reference to the parent scene (main game scene).
+        this.isSmallDevice = true; // Flag to check if the game is played on a small device.
     }
 
     /**
@@ -25,80 +27,82 @@ export default class HangmanChallenge extends Scene {
      * @param {function} data.onComplete - Callback function executed on game completion.
      */
     create(data) {
-        this.word = '';          // The word to be guessed.
-        this.guessedLetters = [];// Array to store letters guessed by the player.
-        this.incorrectGuesses = 0;// Number of incorrect guesses made.
+        this.word = '';         
+        this.guessedLetters = [];
+        this.incorrectGuesses = 0;
         this.parentScene = data.parentScene;
         this.onComplete = data.onComplete;
-        const width = this.parentScene.cameras.main.width;
-        const height = this.parentScene.cameras.main.height;
+        const width = window.innerWidth;
+        const height = window.innerHeight;
+
+        // Responsive: detect small device
+        this.isSmallDevice = Math.min(width, height) < 700;
+        console.log(`Hangman Challenge: width = ${width}, height = ${height}`);
+        this.letterFontSize = this.isSmallDevice ? 82 : 42;
+        this.wordFontSize = this.isSmallDevice ? 94 : 42;
+        this.guessedFontSize = this.isSmallDevice ? 64 : 32;
+
         // Semi-transparent dark overlay
         this.add.rectangle(width / 2, height / 2, width, height, 0x000000, 0.7)
             .setScrollFactor(0);
 
-        // Add an image to represent the hangman figure.  Requires an image asset named 'hangman' with frames 'hangman_0', 'hangman_1', etc.
-        this.hangmanImage = this.add.image(this.scale.width / 2, this.scale.height / 2, `hangman-0${this.incorrectGuesses + 1}`).setOrigin(0.5);
-        //this.hangmanImage.setDepth(9)
+        // Hangman image position
+        let hangmanX = width / 2;
+        let hangmanY = height / 2;
+        this.hangmanImage = this.add.image(hangmanX, hangmanY, `hangman-0${this.incorrectGuesses + 1}`).setOrigin(0.5);
 
-        // Select a random word from the word list.  Consider loading words from a file for scalability.
-        const words = [
-            // Animals
-            "gat",
-            "gos",
-            "elefant",
-            "girafa",
-            "conill",
-            
-            // Família i persones
-            "mare",
-            "pare",
-            "amic",
-            "germa",
-            "avia",
-            
-            // Objectes quotidians
-            "pilota",
-            "llibre",
-            "joguina",
-            "cadira",
-            "taula",
-            
-            // Accions i emocions
-            "jugar",
-            "riure",
-            "correr",
-            "saltar",
-            "estimar",
-            
-            // Menjar
-            "poma",
-            "pastis",
-            "xocolata",
-            "gelat"
-        ];
-        this.word = words[Math.floor(Math.random() * words.length)].toUpperCase();
+        // Select a random word from the externalized word list
+        this.word = hangmanWords[Math.floor(Math.random() * hangmanWords.length)].toUpperCase();
 
         // Add text elements to display the word, guessed letters, and game result.
-        this.wordDisplay = this.add.text(this.scale.width / 2, this.scale.height - 200, this.getWordDisplay(), {
-            fontSize: '32px',
+        let wordY = this.isSmallDevice ? height - 120 : this.scale.height - 200;
+        this.wordDisplay = this.add.text(width / 2, wordY, this.getWordDisplay(), {
+            fontSize: `${this.wordFontSize}px`,
             fontFamily: fontFamily,
             fill: '#fff',
             backgroundColor: '#000',
             padding: { x: 20, y: 5 }
-        }).setOrigin(0.5); // Center origin
+        }).setOrigin(0.5);
 
-        this.guessedLettersDisplay = this.add.text(this.scale.width / 2, 100, '', {
-            fontSize: '24px',
+        let guessedY = this.isSmallDevice ? 40 : 100;
+        this.guessedLettersDisplay = this.add.text(width / 2, guessedY, '', {
+            fontSize: `${this.guessedFontSize}px`,
             fontFamily: fontFamily,
             fill: '#000'
         }).setOrigin(0.5);
-
 
         // Listen for keyboard input events.
         this.input.keyboard.on('keydown', this.handleKeyInput, this);
 
         // Create on-screen keyboard layout for easier mobile play.
+        this.keyboardButtons = [];
         this.keyboardLayout();
+
+        // Responsive: redraw keyboard on resize
+        this.scale.on('resize', this.handleResize, this);
+    }
+
+    handleResize() {
+        // Remove old keyboard buttons
+        if (this.keyboardButtons && this.keyboardButtons.length) {
+            this.keyboardButtons.forEach(btn => btn.destroy());
+            this.keyboardButtons = [];
+        }
+        // Recalculate device type and font sizes
+        const width = this.parentScene.cameras.main.width;
+        const height = this.parentScene.cameras.main.height;
+        this.isSmallDevice = Math.min(width, height) < 1000;
+        this.letterFontSize = this.isSmallDevice ? 82 : 42;
+        this.wordFontSize = this.isSmallDevice ? 94 : 42;
+        this.guessedFontSize = this.isSmallDevice ? 64 : 32;
+        // Reposition word and guessed letters
+        let wordY = this.isSmallDevice ? height - 120 : height - 200;
+        this.wordDisplay.setFontSize(this.wordFontSize + 'px').setPosition(width / 2, wordY);
+        let guessedY = this.isSmallDevice ? 40 : 100;
+        this.guessedLettersDisplay.setFontSize(this.guessedFontSize + 'px').setPosition(width / 2, guessedY);
+        // Redraw keyboard
+        this.keyboardLayout();
+    
     }
 
     /**
@@ -106,32 +110,73 @@ export default class HangmanChallenge extends Scene {
      */
     keyboardLayout() {
         const keys = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
-        const initialKeyPosition = { 
-            x: this.scale.width / 2 - (keys.length*45/2),
-            y: this.scale.height - 150,
-            width: 45,
-            height: 35
-        }
-        console.log(initialKeyPosition)
-        let x = initialKeyPosition.x;
-        let y = initialKeyPosition.y;
-        let letterButtons = [];
+        // Remove old keyboard buttons if any
+        if (!this.keyboardButtons) this.keyboardButtons = [];
+        this.keyboardButtons.forEach(btn => btn.destroy());
+        this.keyboardButtons = [];
 
-        for (let i = 0; i < keys.length; i++) {
-            // Create interactive text buttons for each letter.
-            const letterButton = this.add.text(x, y, keys[i], {
-                fontSize: '24px',
-                fontFamily: fontFamily,
-                fill: '#fff',
-                backgroundColor: '#000',
-                padding: { x: 20, y: 5 }
-            }).setInteractive()
-              .on('pointerup', () => { this.guessLetter(keys[i]); letterButton.disableInteractive(); letterButton.setVisible(false);});
-            letterButtons.push(letterButton);
-            x += initialKeyPosition.width;
-            if ((i + 1) % (this.scale.width/keys.length) === 0) {
-                x = initialKeyPosition.x;
-                y += initialKeyPosition.height;
+        if (this.isSmallDevice) {
+            // Two columns, 13 letters each
+            const leftKeys = keys.slice(0, 13).split("");
+            const rightKeys = keys.slice(13).split("");
+            const blockPadding = 10;
+            const keyHeight = 48;
+            const keyWidth = 80;
+            const blockYStart = this.scale.height / 2 - (13 * (keyHeight + blockPadding)) / 2;
+            const leftX = this.scale.width * 0.18;
+            const rightX = this.scale.width * 0.82;
+            // Left block
+            for (let i = 0; i < leftKeys.length; i++) {
+                const y = blockYStart + i * (keyHeight + blockPadding);
+                const letterButton = this.add.text(leftX, y, leftKeys[i], {
+                    fontSize: `${this.letterFontSize}px`,
+                    fontFamily: fontFamily,
+                    fill: '#fff',
+                    backgroundColor: '#000',
+                    padding: { x: 24, y: 8 }
+                }).setOrigin(0.5)
+                  .setInteractive()
+                  .on('pointerup', () => { this.guessLetter(leftKeys[i]); letterButton.disableInteractive(); letterButton.setVisible(false); });
+                this.keyboardButtons.push(letterButton);
+            }
+            // Right block
+            for (let i = 0; i < rightKeys.length; i++) {
+                const y = blockYStart + i * (keyHeight + blockPadding);
+                const letterButton = this.add.text(rightX, y, rightKeys[i], {
+                    fontSize: `${this.letterFontSize}px`,
+                    fontFamily: fontFamily,
+                    fill: '#fff',
+                    backgroundColor: '#000',
+                    padding: { x: 24, y: 8 }
+                }).setOrigin(0.5)
+                  .setInteractive()
+                  .on('pointerup', () => { this.guessLetter(rightKeys[i]); letterButton.disableInteractive(); letterButton.setVisible(false); });
+                this.keyboardButtons.push(letterButton);
+            }
+        } else {
+            // Desktop/tablet: horizontal rows
+            const keyWidth = 60;
+            const keyHeight = 35;
+            const keysPerRow = 13;
+            const startX = this.scale.width / 2 - (keysPerRow * keyWidth) / 2;
+            const startY = this.scale.height - 120;
+            let x = startX;
+            let y = startY;
+            for (let i = 0; i < keys.length; i++) {
+                const letterButton = this.add.text(x, y, keys[i], {
+                    fontSize: `${this.letterFontSize}px`,
+                    fontFamily: fontFamily,
+                    fill: '#fff',
+                    backgroundColor: '#000',
+                    padding: { x: 20, y: 5 }
+                }).setInteractive()
+                  .on('pointerup', () => { this.guessLetter(keys[i]); letterButton.disableInteractive(); letterButton.setVisible(false); });
+                this.keyboardButtons.push(letterButton);
+                x += keyWidth;
+                if ((i + 1) % keysPerRow === 0) {
+                    x = startX;
+                    y += keyHeight + 10;
+                }
             }
         }
     }

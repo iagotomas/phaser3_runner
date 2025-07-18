@@ -65,7 +65,6 @@ export default class MemoryChallenge extends Scene {
                     .setData('flipped', false)
                     .setData('row', row)
                     .setData('col', col)
-                    .setMask(cardBackMask)
                     .on('pointerdown', () => this.flipCard(cardContainer));
                 cardContainer.add([cardBackGraphics, cardFrontGraphics, card]);
                 this.cards.push(cardContainer);
@@ -84,7 +83,6 @@ export default class MemoryChallenge extends Scene {
         graphics.fillRoundedRect(-cardWidth / 2 - borderThickness, -cardHeight / 2 - borderThickness, cardWidth + 2 * borderThickness, cardHeight + 2 * borderThickness, this.cornerRadius);
 
         // Draw the card background
-        graphics.fillStyle(fillColor, 1);
         graphics.fillRoundedRect(-cardWidth / 2, -cardHeight / 2, cardWidth, cardHeight, this.cornerRadius);
 
         // Create a mask from the graphics
