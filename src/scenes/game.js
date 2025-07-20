@@ -2,6 +2,7 @@ import { Scene } from 'phaser'
 import Player from '../objects/player'
 import CloudManager from '../objects/cloud'
 import ShopUI from '../objects/shopui'
+import AmmunitionUI from '../objects/ammunitionUI'
 /**
  * Depth hierarchy (from back to front):
     0: Sky background
@@ -23,6 +24,7 @@ export default class Game extends Scene {
         this.backgrounds = [];
         this.controls = null;
         this.shopUI = null;
+        this.ammunitionUI = null;
         this.bgMusic = null;
         this.platformGroup = null;
         this.moveTarget = null;
@@ -96,6 +98,8 @@ export default class Game extends Scene {
             depth: 15,
             onBallCollect: (points) => {
                 this.updateScore(this.coinScore + points)
+                // Update ammunition UI when balls are collected
+                this.updateAmmunitionUI()
             }
         })
 
@@ -187,6 +191,14 @@ export default class Game extends Scene {
 
         // Create shop UI
         this.shopUI = new ShopUI(this)
+
+        // Create ammunition UI
+        this.ammunitionUI = new AmmunitionUI(this, 20, 120)
+        this.ammunitionUI.setDepth(100) // UI elements depth
+        this.ammunitionUI.setScrollFactor(0) // Fixed to screen
+        
+        // Initialize ammunition UI display
+        this.updateAmmunitionUI()
 
         // Add background music
         this.bgMusic = this.sound.add('bgMusic', {
@@ -403,6 +415,11 @@ export default class Game extends Scene {
             this.shopUI.handleResize()
         }
 
+        // Update ammunition UI resize
+        if (this.ammunitionUI) {
+            this.ammunitionUI.handleResize(scaleFactor)
+        }
+
         // Update world bounds
         this.physics.world.setBounds(0, 0, width * GAME_TOTAL_WIDTH_SCREENS_MULTIPLIER, height)
 
@@ -501,6 +518,24 @@ export default class Game extends Scene {
         this.coinScore = newScore
         this.coinCounter.setText(`${this.coinScore}`)
         localStorage.setItem('coinScore', this.coinScore.toString())
+    }
+
+    // Method to update ammunition UI based on player inventory
+    updateAmmunitionUI() {
+        if (this.ammunitionUI && this.player) {
+            const currentCount = this.player.getBallCount()
+            const maxCount = this.player.getInventory().maxCapacity
+            
+            // Update the display
+            this.ammunitionUI.updateDisplay(currentCount, maxCount)
+            
+            // Show appropriate state indicators
+            if (currentCount === 0) {
+                this.ammunitionUI.showEmptyState()
+            } else if (currentCount === maxCount) {
+                this.ammunitionUI.showFullState()
+            }
+        }
     }
 
     spawnInitialPortals() {
