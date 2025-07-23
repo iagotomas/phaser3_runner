@@ -3,6 +3,7 @@ import State from '../objects/state'
 import StateMachine from '../objects/statemachine'
 import CustomizationManager from '../objects/customization'
 import BallInventory from '../objects/ballInventory'
+import { ShootingSystem } from '../objects/shootingSystem'
 
 export default class Player extends Phaser.Physics.Arcade.Sprite {
   /**
@@ -73,6 +74,9 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
         
         // Initialize ball inventory for ammunition management
         this.ballInventory = new BallInventory(scene)
+        
+        // Initialize shooting system for projectile management
+        this.shootingSystem = new ShootingSystem(scene)
         
         // Initialize cosmetics
         this.hat = null
@@ -204,6 +208,62 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
      */
     isInventoryEmpty() {
         return this.ballInventory.isEmpty()
+    }
+
+    // Shooting system methods
+    
+    /**
+     * Gets the player's shooting system instance
+     * @returns {ShootingSystem} - The player's shooting system
+     */
+    getShootingSystem() {
+        return this.shootingSystem
+    }
+
+    /**
+     * Attempts to shoot a ball projectile from the player's position
+     * Checks inventory before firing and decreases ammunition count on successful shot
+     * @param {Object} options - Additional firing options (angle, power, etc.)
+     * @returns {Phaser.Physics.Arcade.Sprite|null} - The created projectile or null if unable to shoot
+     */
+    shoot(options = {}) {
+        // Check if player has ammunition (Requirement 2.2, 2.5)
+        if (this.isInventoryEmpty()) {
+            return null
+        }
+
+        // Attempt to fire projectile using shooting system (Requirement 2.1)
+        const projectile = this.shootingSystem.fireFromPlayer(this, options)
+        
+        // If projectile was successfully created, consume ammunition (Requirement 2.2)
+        if (projectile) {
+            this.removeBall()
+        }
+        
+        return projectile
+    }
+
+    /**
+     * Checks if the player can currently shoot
+     * @returns {boolean} - True if player has ammunition and can shoot
+     */
+    canShoot() {
+        return !this.isInventoryEmpty() && 
+               this.shootingSystem.getActiveProjectileCount() < this.shootingSystem.maxProjectiles
+    }
+
+    /**
+     * Gets trajectory information for aiming purposes
+     * @param {Object} options - Trajectory calculation options
+     * @returns {Object|null} - Trajectory info or null if can't shoot
+     */
+    getTrajectoryInfo(options = {}) {
+        if (!this.canShoot()) {
+            return null
+        }
+        
+        const direction = this.flipX ? -1 : 1
+        return this.shootingSystem.getTrajectoryInfo(direction, options)
     }
 }
 

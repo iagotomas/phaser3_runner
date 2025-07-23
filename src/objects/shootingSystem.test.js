@@ -39,10 +39,17 @@ const createMockProjectile = () => ({
     setScale: vi.fn().mockReturnThis(),
     setVelocityX: vi.fn().mockReturnThis(),
     setVelocityY: vi.fn().mockReturnThis(),
+    setBounce: vi.fn().mockReturnThis(),
+    setCollideWorldBounds: vi.fn().mockReturnThis(),
+    setAngularVelocity: vi.fn().mockReturnThis(),
     clearTint: vi.fn().mockReturnThis(),
     body: {
         setSize: vi.fn(),
-        setVelocity: vi.fn()
+        setVelocity: vi.fn(),
+        setGravityY: vi.fn(),
+        setDrag: vi.fn(),
+        setMass: vi.fn(),
+        velocity: { x: 0, y: 0 }
     },
     active: true,
     x: 100,
@@ -80,11 +87,11 @@ describe('ShootingSystem', () => {
             });
         });
 
-        it('should configure projectile group defaults', () => {
-            const groupDefaults = shootingSystem.projectileGroup.defaults;
-            expect(groupDefaults.setGravityY).toHaveBeenCalledWith(300);
-            expect(groupDefaults.setBounce).toHaveBeenCalledWith(0.3);
-            expect(groupDefaults.setCollideWorldBounds).toHaveBeenCalledWith(false);
+        it('should not configure group defaults (physics configured per projectile)', () => {
+            // Physics properties are now configured individually for each projectile
+            // in the configureProjectilePhysics method, not as group defaults
+            expect(shootingSystem.projectileGroup).toBeDefined();
+            expect(shootingSystem.activeProjectiles).toBeDefined();
         });
 
         it('should initialize empty active projectiles set', () => {
@@ -112,14 +119,16 @@ describe('ShootingSystem', () => {
             shootingSystem.fireBall(100, 200, 1);
 
             expect(mockProjectile.body.setSize).toHaveBeenCalledWith(16, 16);
-            expect(mockProjectile.setVelocityX).toHaveBeenCalledWith(600);
-            expect(mockProjectile.setVelocityY).toHaveBeenCalledWith(-200);
+            // With -30 degree angle: cos(-30°) * 600 ≈ 519.615, sin(-30°) * 600 = -300
+            expect(mockProjectile.setVelocityX).toHaveBeenCalledWith(expect.closeTo(519.615, 1));
+            expect(mockProjectile.setVelocityY).toHaveBeenCalledWith(expect.closeTo(-300, 0.1));
         });
 
         it('should handle left direction correctly', () => {
             shootingSystem.fireBall(100, 200, -1);
 
-            expect(mockProjectile.setVelocityX).toHaveBeenCalledWith(-600);
+            // With -30 degree angle and left direction: cos(-30°) * 600 * -1 ≈ -519.615
+            expect(mockProjectile.setVelocityX).toHaveBeenCalledWith(expect.closeTo(-519.615, 1));
         });
 
         it('should add projectile to active tracking', () => {
@@ -281,6 +290,97 @@ describe('ShootingSystem', () => {
             expect(() => {
                 shootingSystem.update();
             }).not.toThrow();
+        });
+    });
+
+    describe('calculateTrajectory', () => {
+        it('should calculate correct trajectory for default angle', () => {
+            const trajectory = shootingSystem.calculateTrajectory(1);
+            
+            // Default -30 degree angle
+            expect(trajectory.velocityX).toBeCloseTo(519.615, 1);
+            expect(trajectory.velocityY).toBeCloseTo(-300, 1);
+        });
+
+        it('should handle custom angle and power', () => {
+            const trajectory = shootingSystem.calculateTrajectory(1, { angle: -45, power: 0.5 });
+            
+            // -45 degree angle with 0.5 power: cos(-45°) * 300 ≈ 212.13, sin(-45°) * 300 ≈ -212.13
+            expect(trajectory.velocityX).toBeCloseTo(212.13, 1);
+            expect(trajectory.velocityY).toBeCloseTo(-212.13, 1);
+        });
+
+        it('should handle left direction correctly', () => {
+            const trajectory = shootingSystem.calculateTrajectory(-1);
+            
+            expect(trajectory.velocityX).toBeCloseTo(-519.615, 1);
+            expect(trajectory.velocityY).toBeCloseTo(-300, 1);
+        });
+    });
+
+    describe('fireFromPlayer', () => {
+        let mockPlayer;
+
+        beforeEach(() => {
+            mockPlayer = {
+                x: 100,
+                y: 200,
+                flipX: false
+            };
+        });
+
+        it('should fire from player position with correct offset', () => {
+            const spy = vi.spyOn(shootingSystem, 'fireBall').mockReturnValue(mockProjectile);
+            
+            shootingSystem.fireFromPlayer(mockPlayer);
+            
+            expect(spy).toHaveBeenCalledWith(130, 180, 1, {});
+        });
+
+        it('should handle left-facing player', () => {
+            mockPlayer.flipX = true;
+            const spy = vi.spyOn(shootingSystem, 'fireBall').mockReturnValue(mockProjectile);
+            
+            shootingSystem.fireFromPlayer(mockPlayer);
+            
+            expect(spy).toHaveBeenCalledWith(70, 180, -1, {});
+        });
+    });
+
+    describe('getTrajectoryInfo', () => {
+        it('should return complete trajectory information', () => {
+            const info = shootingSystem.getTrajectoryInfo(1, { angle: -30, power: 1.0 });
+            
+            expect(info.velocityX).toBeCloseTo(519.615, 1);
+            expect(info.velocityY).toBeCloseTo(-300, 1);
+            expect(info.angle).toBe(-30);
+            expect(info.direction).toBe(1);
+            expect(info.speed).toBeCloseTo(600, 1);
+        });
+    });
+
+    describe('configureProjectilePhysics', () => {
+        it('should configure all physics properties', () => {
+            shootingSystem.configureProjectilePhysics(mockProjectile);
+            
+            expect(mockProjectile.body.setGravityY).toHaveBeenCalledWith(400);
+            expect(mockProjectile.setBounce).toHaveBeenCalledWith(0.6, 0.4);
+            expect(mockProjectile.body.setDrag).toHaveBeenCalledWith(50, 20);
+            expect(mockProjectile.body.setMass).toHaveBeenCalledWith(1);
+            expect(mockProjectile.setCollideWorldBounds).toHaveBeenCalledWith(false);
+            expect(mockProjectile.setAngularVelocity).toHaveBeenCalled();
+        });
+
+        it('should set angular velocity based on horizontal velocity direction', () => {
+            mockProjectile.body.velocity.x = 100;
+            shootingSystem.configureProjectilePhysics(mockProjectile);
+            
+            expect(mockProjectile.setAngularVelocity).toHaveBeenCalledWith(200);
+            
+            mockProjectile.body.velocity.x = -100;
+            shootingSystem.configureProjectilePhysics(mockProjectile);
+            
+            expect(mockProjectile.setAngularVelocity).toHaveBeenCalledWith(-200);
         });
     });
 });

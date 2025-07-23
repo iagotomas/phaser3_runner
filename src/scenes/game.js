@@ -3,6 +3,7 @@ import Player from '../objects/player'
 import CloudManager from '../objects/cloud'
 import ShopUI from '../objects/shopui'
 import AmmunitionUI from '../objects/ammunitionUI'
+import { ShootingSystem } from '../objects/shootingSystem'
 /**
  * Depth hierarchy (from back to front):
     0: Sky background
@@ -37,6 +38,12 @@ export default class Game extends Scene {
         this.lastPortalPosition = 0;
         this.minPortalSpacing = 2000; // Minimum pixels between portals
         this.portalChance = 0.9; // 30% chance to spawn a portal when possible
+        
+        // Shooting system properties
+        this.shootingSystem = null;
+        this.shootButton = null;
+        this.lastShootTime = 0;
+        this.shootCooldown = 300; // 300ms cooldown between shots
     }
     
     create() {
@@ -112,6 +119,9 @@ export default class Game extends Scene {
 
         // Set up controls
         this.keys = this.input.keyboard.createCursorKeys()
+        
+        // Add shooting key (X key)
+        this.keys.shoot = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.X)
 
         // Add resize handler
         this.scale.on('resize', this.handleResize, this)
@@ -200,6 +210,9 @@ export default class Game extends Scene {
         // Initialize ammunition UI display
         this.updateAmmunitionUI()
 
+        // Create shooting system
+        this.shootingSystem = new ShootingSystem(this)
+
         // Add background music
         this.bgMusic = this.sound.add('bgMusic', {
             volume: 0.5,
@@ -261,6 +274,11 @@ export default class Game extends Scene {
                 return
             }
 
+            // Ignore if clicking on shoot button
+            if (this.shootButton && this.shootButton.getBounds().contains(pointer.x, pointer.y)) {
+                return
+            }
+
             // Convert screen coordinates to world coordinates
             const worldPoint = this.cameras.main.getWorldPoint(pointer.x, pointer.y)
 
@@ -316,6 +334,29 @@ export default class Game extends Scene {
             })
             .on('pointerout', () => {
                 this.keys.space.isDown = false
+            })
+
+        // Add shoot button
+        this.shootButton = this.add.container(this.scale.width - 200, this.scale.height - 100)
+        this.shootButton.setScrollFactor(0)
+        this.shootButton.setDepth(100)
+
+        const shootBg = this.add.circle(0, 0, 40, 0x000000, 0.7)
+        const shootIcon = this.add.text(0, 0, '🎯', {
+            fontSize: '28px',
+            color: '#ffffff'
+        }).setOrigin(0.5)
+
+        this.shootButton.add([shootBg, shootIcon])
+        this.shootButton.setInteractive(
+            new Phaser.Geom.Circle(0, 0, 40),
+            Phaser.Geom.Circle.Contains
+        )
+
+        // Shoot button handlers
+        this.shootButton
+            .on('pointerdown', () => {
+                this.handleShoot()
             })
 
         // Add portal group after platform creation
@@ -410,6 +451,13 @@ export default class Game extends Scene {
                 .setPosition(width - buttonSize - padding, height - buttonSize - padding)
         }
 
+        // Update shoot button position and scale
+        if (this.shootButton) {
+            this.shootButton
+                .setScale(scaleFactor)
+                .setPosition(width - 200 * scaleFactor, height - 100 * scaleFactor)
+        }
+
         // Replace shop UI resize code with:
         if (this.shopUI) {
             this.shopUI.handleResize()
@@ -474,6 +522,11 @@ export default class Game extends Scene {
         this.player.step()
         this.cloudManager.update()
 
+        // Handle keyboard shooting input
+        if (this.keys.shoot && Phaser.Input.Keyboard.JustDown(this.keys.shoot)) {
+            this.handleShoot()
+        }
+
         // Update FPS counter less frequently
         if (time % 10 === 0) { // Only update every 10 frames
             const fps = (1000 / delta).toFixed(0)
@@ -535,6 +588,39 @@ export default class Game extends Scene {
             } else if (currentCount === maxCount) {
                 this.ammunitionUI.showFullState()
             }
+        }
+    }
+
+    // Method to handle shooting input with cooldown and inventory checks
+    handleShoot() {
+        const currentTime = this.time.now
+        
+        // Check cooldown
+        if (currentTime - this.lastShootTime < this.shootCooldown) {
+            return
+        }
+        
+        // Check if player has ammunition
+        if (!this.player || this.player.isInventoryEmpty()) {
+            // Visual feedback for empty inventory (optional)
+            console.log('No ammunition available')
+            return
+        }
+        
+        // Fire projectile using shooting system
+        const projectile = this.shootingSystem.fireFromPlayer(this.player)
+        
+        if (projectile) {
+            // Successfully fired - remove ball from inventory
+            this.player.removeBall()
+            
+            // Update ammunition UI
+            this.updateAmmunitionUI()
+            
+            // Update last shoot time
+            this.lastShootTime = currentTime
+            
+            console.log('Ball fired! Remaining ammunition:', this.player.getBallCount())
         }
     }
 
