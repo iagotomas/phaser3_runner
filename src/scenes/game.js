@@ -4,6 +4,7 @@ import CloudManager from '../objects/cloud'
 import ShopUI from '../objects/shopui'
 import AmmunitionUI from '../objects/ammunitionUI'
 import { ShootingSystem } from '../objects/shootingSystem'
+import Enemy from '../objects/enemy'
 /**
  * Depth hierarchy (from back to front):
     0: Sky background
@@ -44,6 +45,12 @@ export default class Game extends Scene {
         this.shootButton = null;
         this.lastShootTime = 0;
         this.shootCooldown = 300; // 300ms cooldown between shots
+        
+        // Enemy system properties
+        this.enemyGroup = null;
+        this.lastEnemySpawn = 0;
+        this.enemySpawnInterval = 3000; // Spawn enemy every 3 seconds
+        this.maxEnemies = 5; // Maximum enemies on screen at once
     }
     
     create() {
@@ -212,6 +219,27 @@ export default class Game extends Scene {
 
         // Create shooting system
         this.shootingSystem = new ShootingSystem(this)
+
+        // Create enemy group and set up enemy spawning
+        this.enemyGroup = this.physics.add.group()
+        
+        // Add collision between enemies and platforms
+        this.physics.add.collider(this.enemyGroup, this.platformGroup)
+        
+        // Listen for enemy destruction events
+        this.events.on('enemyDestroyed', this.handleEnemyDestroyed, this)
+        
+        // Add collision detection between projectiles and enemies
+        this.physics.add.overlap(
+            this.shootingSystem.projectileGroup,
+            this.enemyGroup,
+            this.handleProjectileEnemyCollision,
+            null,
+            this
+        )
+        
+        // Spawn initial enemies
+        this.spawnInitialEnemies()
 
         // Add background music
         this.bgMusic = this.sound.add('bgMusic', {
@@ -527,6 +555,9 @@ export default class Game extends Scene {
             this.handleShoot()
         }
 
+        // Handle enemy spawning
+        this.spawnEnemies(time)
+
         // Update FPS counter less frequently
         if (time % 10 === 0) { // Only update every 10 frames
             const fps = (1000 / delta).toFixed(0)
@@ -736,5 +767,165 @@ export default class Game extends Scene {
             duration: 1500,
             onComplete: () => popup.destroy()
         });
+    }
+
+    // Enemy spawning and management methods
+
+    /**
+     * Spawns initial enemies when the game starts
+     */
+    spawnInitialEnemies() {
+        const totalWidth = this.game.config.width * GAME_TOTAL_WIDTH_SCREENS_MULTIPLIER
+        const groundY = this.scale.height - 24
+        
+        // Spawn a few enemies at different positions for testing
+        const enemyPositions = [800, 1200, 1800, 2500, 3000]
+        
+        enemyPositions.forEach(x => {
+            this.createEnemy(x, groundY - 150)
+        })
+        
+        console.log(`Spawned ${enemyPositions.length} initial enemies`)
+    }
+
+    /**
+     * Handles periodic enemy spawning during gameplay
+     * @param {number} time - Current game time
+     */
+    spawnEnemies(time) {
+        // Check if it's time to spawn a new enemy
+        if (time - this.lastEnemySpawn < this.enemySpawnInterval) {
+            return
+        }
+        
+        // Check if we've reached the maximum enemy count
+        const currentEnemyCount = this.enemyGroup.getLength()
+        if (currentEnemyCount >= this.maxEnemies) {
+            return
+        }
+        
+        // Spawn enemy ahead of the player
+        const playerX = this.player.x
+        const spawnX = playerX + Phaser.Math.Between(400, 800) // Spawn 400-800 pixels ahead
+        const groundY = this.scale.height - 24
+        
+        this.createEnemy(spawnX, groundY - 150)
+        this.lastEnemySpawn = time
+        
+        console.log(`Spawned enemy at x: ${spawnX}, current enemy count: ${currentEnemyCount + 1}`)
+    }
+
+    /**
+     * Creates a new enemy at the specified position
+     * @param {number} x - X position for the enemy
+     * @param {number} y - Y position for the enemy
+     * @returns {Enemy} - The created enemy instance
+     */
+    createEnemy(x, y) {
+        const enemy = new Enemy(this, x, y, 'ponygirl', 'castle_unicorn', {
+            health: 3,
+            type: 'basic',
+            moveSpeed: 50
+        })
+        
+        // Add enemy to the enemy group
+        this.enemyGroup.add(enemy)
+        
+        // Set appropriate depth (depth 16 as specified in requirements)
+        enemy.setDepth(16)
+        
+        return enemy
+    }
+
+    /**
+     * Handles collision between projectiles and enemies
+     * @param {Phaser.Physics.Arcade.Sprite} projectile - The projectile that hit the enemy
+     * @param {Enemy} enemy - The enemy that was hit
+     */
+    handleProjectileEnemyCollision(projectile, enemy) {
+        // Verify both objects are still active
+        if (!projectile.active || !enemy.active || enemy.health <= 0) {
+            return
+        }
+        
+        console.log(`Projectile hit enemy ${enemy.enemyId} at (${enemy.x}, ${enemy.y})`)
+        
+        // Deal damage to the enemy (default damage is 1)
+        const damageDealt = 1
+        const enemyDestroyed = enemy.takeDamage(damageDealt)
+        
+        // Clean up the projectile immediately after collision
+        this.shootingSystem.cleanupProjectile(projectile)
+        
+        // Show damage indicator at collision point
+        this.showDamageIndicator(projectile.x, projectile.y, damageDealt)
+        
+        // If enemy was destroyed, it will emit the 'enemyDestroyed' event
+        // which is already handled by handleEnemyDestroyed method
+        
+        console.log(`Damage dealt: ${damageDealt}, Enemy destroyed: ${enemyDestroyed}`)
+    }
+
+    /**
+     * Shows a visual damage indicator at the collision point
+     * @param {number} x - X position for the indicator
+     * @param {number} y - Y position for the indicator
+     * @param {number} damage - Amount of damage dealt
+     */
+    showDamageIndicator(x, y, damage) {
+        const damageText = this.add.text(x, y, `-${damage}`, {
+            fontSize: '20px',
+            fontFamily: 'Arial',
+            color: '#ff4444',
+            stroke: '#000000',
+            strokeThickness: 2,
+            fontWeight: 'bold'
+        })
+        
+        // Set depth to appear above other game elements
+        damageText.setDepth(50)
+        
+        // Animate the damage indicator
+        this.tweens.add({
+            targets: damageText,
+            y: damageText.y - 40,
+            alpha: 0,
+            duration: 800,
+            ease: 'Power2',
+            onComplete: () => damageText.destroy()
+        })
+    }
+
+    /**
+     * Handles enemy destruction events
+     * @param {Object} eventData - Data about the destroyed enemy
+     */
+    handleEnemyDestroyed(eventData) {
+        console.log(`Enemy destroyed: ${eventData.enemyId} at position (${eventData.position.x}, ${eventData.position.y})`)
+        
+        // Award points for destroying enemy
+        this.updateScore(this.coinScore + 10)
+        
+        // Show score popup at enemy position
+        const popup = this.add.text(
+            eventData.position.x,
+            eventData.position.y - 30,
+            '+10',
+            {
+                fontSize: '24px',
+                fontFamily: 'Arial',
+                color: '#ff6600',
+                stroke: '#000000',
+                strokeThickness: 3
+            }
+        )
+        
+        this.tweens.add({
+            targets: popup,
+            y: popup.y - 60,
+            alpha: 0,
+            duration: 1000,
+            onComplete: () => popup.destroy()
+        })
     }
 }
