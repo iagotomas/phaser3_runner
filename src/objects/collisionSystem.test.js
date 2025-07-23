@@ -9,7 +9,8 @@ const createMockGameScene = () => ({
                 get: vi.fn(),
                 destroy: vi.fn()
             })),
-            overlap: vi.fn()
+            overlap: vi.fn(),
+            collider: vi.fn()
         },
         world: {
             bounds: { x: 0, y: 0, width: 800, height: 600 }
@@ -29,10 +30,19 @@ const createMockGameScene = () => ({
         text: vi.fn(() => ({
             setDepth: vi.fn().mockReturnThis(),
             destroy: vi.fn()
+        })),
+        circle: vi.fn(() => ({
+            setDepth: vi.fn().mockReturnThis(),
+            destroy: vi.fn()
         }))
     },
     tweens: {
         add: vi.fn()
+    },
+    cameras: {
+        main: {
+            shake: vi.fn()
+        }
     },
     updateScore: vi.fn()
 });
@@ -94,17 +104,25 @@ const createMockEnemy = () => {
     return enemy;
 };
 
-describe('Projectile-Enemy Collision System', () => {
+describe('Projectile Collision System', () => {
     let mockScene;
     let shootingSystem;
     let enemy;
     let mockProjectile;
+    let mockPlatformGroup;
 
     beforeEach(() => {
         mockScene = createMockGameScene();
         shootingSystem = new ShootingSystem(mockScene);
         mockProjectile = createMockProjectile();
         enemy = createMockEnemy();
+        
+        // Create mock platform group
+        mockPlatformGroup = {
+            create: vi.fn(),
+            getChildren: vi.fn(() => []),
+            destroy: vi.fn()
+        };
         
         // Mock the projectile group to return our mock projectile
         shootingSystem.projectileGroup.get.mockReturnValue(mockProjectile);
@@ -272,6 +290,106 @@ describe('Projectile-Enemy Collision System', () => {
             expect(wasDestroyed).toBe(true);
             expect(enemy.health).toBe(0);
             expect(enemy.active).toBe(false);
+        });
+    });
+
+    describe('projectile-terrain collision handling', () => {
+        let mockTerrain;
+
+        beforeEach(() => {
+            mockTerrain = {
+                x: 300,
+                y: 400,
+                surfaceType: 'hard'
+            };
+        });
+
+        it('should set up terrain collision detection', () => {
+            shootingSystem.setupTerrainCollision(mockPlatformGroup);
+            
+            expect(mockScene.physics.add.collider).toHaveBeenCalledWith(
+                shootingSystem.projectileGroup,
+                mockPlatformGroup,
+                expect.any(Function),
+                null,
+                mockScene
+            );
+        });
+
+        it('should handle projectile-terrain collision', () => {
+            // Add projectile to active tracking
+            shootingSystem.activeProjectiles.add(mockProjectile);
+            
+            // Simulate terrain collision
+            shootingSystem.handleProjectileTerrainCollision(mockProjectile, mockTerrain);
+            
+            // Verify projectile was cleaned up
+            expect(mockProjectile.setActive).toHaveBeenCalledWith(false);
+            expect(mockProjectile.setVisible).toHaveBeenCalledWith(false);
+            expect(mockProjectile.body.setVelocity).toHaveBeenCalledWith(0, 0);
+            expect(mockProjectile.setAngularVelocity).toHaveBeenCalledWith(0);
+        });
+
+        it('should create impact effect on terrain collision', () => {
+            shootingSystem.handleProjectileTerrainCollision(mockProjectile, mockTerrain);
+            
+            // Verify impact effect was created
+            expect(mockScene.add.circle).toHaveBeenCalledWith(
+                mockProjectile.x,
+                mockProjectile.y,
+                8,
+                0xffffff,
+                0.8
+            );
+            
+            // Verify screen shake effect
+            expect(mockScene.cameras.main.shake).toHaveBeenCalledWith(50, 0.01);
+            
+            // Verify tween animation was created
+            expect(mockScene.tweens.add).toHaveBeenCalled();
+        });
+
+        it('should not process collision if projectile is inactive', () => {
+            mockProjectile.active = false;
+            
+            // Simulate terrain collision with inactive projectile
+            shootingSystem.handleProjectileTerrainCollision(mockProjectile, mockTerrain);
+            
+            // Verify no cleanup was attempted
+            expect(mockProjectile.setActive).not.toHaveBeenCalled();
+            expect(mockScene.add.circle).not.toHaveBeenCalled();
+        });
+
+        it('should apply collision response to stop projectile movement', () => {
+            shootingSystem.applyCollisionResponse(mockProjectile, mockTerrain);
+            
+            // Verify projectile movement was stopped
+            expect(mockProjectile.body.setVelocity).toHaveBeenCalledWith(0, 0);
+            expect(mockProjectile.setAngularVelocity).toHaveBeenCalledWith(0);
+        });
+
+        it('should warn when no platform group is provided', () => {
+            const consoleSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+            
+            shootingSystem.setupTerrainCollision(null);
+            
+            expect(consoleSpy).toHaveBeenCalledWith(
+                'ShootingSystem: No platform group provided for terrain collision'
+            );
+            
+            consoleSpy.mockRestore();
+        });
+
+        it('should log successful terrain collision setup', () => {
+            const consoleSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+            
+            shootingSystem.setupTerrainCollision(mockPlatformGroup);
+            
+            expect(consoleSpy).toHaveBeenCalledWith(
+                'ShootingSystem: Terrain collision detection set up'
+            );
+            
+            consoleSpy.mockRestore();
         });
     });
 

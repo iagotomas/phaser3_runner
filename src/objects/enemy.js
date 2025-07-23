@@ -14,7 +14,7 @@ export default class Enemy extends Phaser.Physics.Arcade.Sprite {
      * @param {number|string} frame - Frame for the enemy sprite
      * @param {Object} config - Configuration options
      */
-    constructor(scene, x, y, texture = 'ponygirl', frame = 'castle_unicorn', config = {}) {
+    constructor(scene, x, y, texture = 'ponygirl', frame = 'little_girl_standing_3', config = {}) {
         super(scene, x, y, texture, frame)
         
         this.scene = scene

@@ -253,6 +253,102 @@ export class ShootingSystem {
     }
     
     /**
+     * Sets up collision detection between projectiles and terrain/platforms
+     * @param {Phaser.Physics.Arcade.StaticGroup} platformGroup - The platform group to collide with
+     */
+    setupTerrainCollision(platformGroup) {
+        if (!platformGroup) {
+            console.warn('ShootingSystem: No platform group provided for terrain collision');
+            return;
+        }
+        
+        // Set up collision between projectiles and platforms
+        this.scene.physics.add.collider(
+            this.projectileGroup,
+            platformGroup,
+            this.handleProjectileTerrainCollision.bind(this),
+            null,
+            this.scene
+        );
+        
+        console.log('ShootingSystem: Terrain collision detection set up');
+    }
+    
+    /**
+     * Handles collision between projectiles and terrain/platforms
+     * @param {Phaser.Physics.Arcade.Sprite} projectile - The projectile that hit terrain
+     * @param {Phaser.Physics.Arcade.Sprite} terrain - The terrain object that was hit
+     */
+    handleProjectileTerrainCollision(projectile, terrain) {
+        // Verify projectile is still active
+        if (!projectile || !projectile.active) {
+            return;
+        }
+        
+        console.log(`Projectile hit terrain at (${projectile.x}, ${projectile.y})`);
+        
+        // Create impact effect at collision point
+        this.createImpactEffect(projectile.x, projectile.y);
+        
+        // Apply collision response based on surface type
+        this.applyCollisionResponse(projectile, terrain);
+        
+        // Clean up the projectile after collision
+        this.cleanupProjectile(projectile);
+    }
+    
+    /**
+     * Creates visual impact effect when projectile hits terrain
+     * @param {number} x - X position of impact
+     * @param {number} y - Y position of impact
+     */
+    createImpactEffect(x, y) {
+        // Create small particle effect or visual indicator
+        const impactEffect = this.scene.add.circle(x, y, 8, 0xffffff, 0.8);
+        impactEffect.setDepth(19); // Above projectiles but below UI
+        
+        // Animate the impact effect
+        this.scene.tweens.add({
+            targets: impactEffect,
+            scaleX: 2,
+            scaleY: 2,
+            alpha: 0,
+            duration: 200,
+            ease: 'Power2',
+            onComplete: () => {
+                impactEffect.destroy();
+            }
+        });
+        
+        // Add small screen shake for impact feedback
+        this.scene.cameras.main.shake(50, 0.01);
+    }
+    
+    /**
+     * Applies appropriate collision response based on surface type
+     * @param {Phaser.Physics.Arcade.Sprite} projectile - The projectile
+     * @param {Phaser.Physics.Arcade.Sprite} terrain - The terrain object
+     */
+    applyCollisionResponse(projectile, terrain) {
+        // For now, all terrain surfaces stop the projectile
+        // In the future, different surface types could have different behaviors:
+        // - Hard surfaces: immediate stop
+        // - Soft surfaces: reduced bounce
+        // - Bouncy surfaces: increased bounce
+        
+        // Stop the projectile's movement
+        projectile.body.setVelocity(0, 0);
+        projectile.setAngularVelocity(0);
+        
+        // Different responses could be implemented based on terrain.surfaceType
+        // if (terrain.surfaceType === 'bouncy') {
+        //     projectile.setBounce(1.2, 0.8);
+        // } else if (terrain.surfaceType === 'soft') {
+        //     projectile.setBounce(0.2, 0.1);
+        // }
+    }
+
+    /**
      * Updates the shooting system (called from scene update loop)
      */
     update() {

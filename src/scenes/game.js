@@ -219,6 +219,9 @@ export default class Game extends Scene {
 
         // Create shooting system
         this.shootingSystem = new ShootingSystem(this)
+        
+        // Set up terrain collision for projectiles
+        this.shootingSystem.setupTerrainCollision(this.platformGroup)
 
         // Create enemy group and set up enemy spawning
         this.enemyGroup = this.physics.add.group()
@@ -822,7 +825,7 @@ export default class Game extends Scene {
      * @returns {Enemy} - The created enemy instance
      */
     createEnemy(x, y) {
-        const enemy = new Enemy(this, x, y, 'ponygirl', 'castle_unicorn', {
+        const enemy = new Enemy(this, x, y, 'ponygirl', 'little_girl_standing_3', {
             health: 3,
             type: 'basic',
             moveSpeed: 50
