@@ -142,6 +142,7 @@ export default class Preload extends Scene {
 
         // Load rest of game assets
         this.load.atlas('ponygirl', 'assets/game_sprites.png', 'assets/game_sprites.json')
+        this.load.atlas('unicorn_enemy', 'assets/unicorn_enemy_spritesheet_packed.png', 'assets/unicorn_enemy.json')
         this.load.atlas('maze', 'assets/maze.png', 'assets/maze.json')
         this.load.atlas('memory', 'assets/memory/memory.png', 'assets/memory/memory.json')
         this.load.atlas('ponygirl-jump', 'assets/girl_jumping.png', 'assets/girl_jumping.json')

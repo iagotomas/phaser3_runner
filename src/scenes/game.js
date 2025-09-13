@@ -825,10 +825,10 @@ export default class Game extends Scene {
      * @returns {Enemy} - The created enemy instance
      */
     createEnemy(x, y) {
-        const enemy = new Enemy(this, x, y, 'ponygirl', 'little_girl_standing_3', {
+        const enemy = new Enemy(this, x, y, 'unicorn_enemy', 'unicorn_enemy_0', {
             health: 3,
             type: 'basic',
-            moveSpeed: 50
+            moveSpeed: 1
         })
         
         // Add enemy to the enemy group

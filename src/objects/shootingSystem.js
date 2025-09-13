@@ -64,6 +64,11 @@ export class ShootingSystem {
         // Configure physics properties for realistic behavior
         this.configureProjectilePhysics(projectile);
         
+        // Add visual and audio feedback
+        this.createMuzzleFlash(x, y, direction);
+        this.createProjectileTrail(projectile);
+        this.playShootingSound();
+        
         // Add to active projectiles tracking
         this.activeProjectiles.add(projectile);
         
@@ -168,6 +173,12 @@ export class ShootingSystem {
     cleanupProjectile(projectile) {
         if (!projectile || !projectile.active) {
             return;
+        }
+        
+        // Clean up particle trail if it exists
+        if (projectile.trailParticles) {
+            projectile.trailParticles.destroy();
+            delete projectile.trailParticles;
         }
         
         // Remove from active tracking
@@ -346,6 +357,135 @@ export class ShootingSystem {
         // } else if (terrain.surfaceType === 'soft') {
         //     projectile.setBounce(0.2, 0.1);
         // }
+    }
+
+    /**
+     * Creates a muzzle flash effect at the shooting position
+     * @param {number} x - X position of the muzzle flash
+     * @param {number} y - Y position of the muzzle flash
+     * @param {number} direction - Direction of shooting (1 for right, -1 for left)
+     */
+    createMuzzleFlash(x, y, direction) {
+        // Check if scene has the required methods (for test compatibility)
+        if (!this.scene.add || !this.scene.add.circle || !this.scene.tweens) {
+            return;
+        }
+        
+        // Create muzzle flash effect using a bright circle
+        const flash = this.scene.add.circle(x, y, 12, 0xffff00, 0.9);
+        flash.setDepth(19); // Above projectiles but below UI
+        
+        // Add slight offset based on direction
+        flash.x += direction * 15;
+        
+        // Create outer glow effect
+        const glow = this.scene.add.circle(x + direction * 15, y, 20, 0xff8800, 0.5);
+        glow.setDepth(18);
+        
+        // Animate the muzzle flash with quick expansion and fade
+        this.scene.tweens.add({
+            targets: flash,
+            scaleX: 2,
+            scaleY: 2,
+            alpha: 0,
+            duration: 150,
+            ease: 'Power2',
+            onComplete: () => {
+                flash.destroy();
+            }
+        });
+        
+        // Animate the glow effect
+        this.scene.tweens.add({
+            targets: glow,
+            scaleX: 1.5,
+            scaleY: 1.5,
+            alpha: 0,
+            duration: 200,
+            ease: 'Power2',
+            onComplete: () => {
+                glow.destroy();
+            }
+        });
+        
+        // Add brief screen flash for impact if camera is available
+        if (this.scene.cameras && this.scene.cameras.main && this.scene.cameras.main.flash) {
+            this.scene.cameras.main.flash(100, 255, 255, 0, false, (camera, progress) => {
+                // Flash intensity decreases with progress
+                const intensity = (1 - progress) * 0.1;
+                camera.setAlpha(1 - intensity);
+            });
+        }
+    }
+    
+    /**
+     * Creates a particle trail effect for the projectile
+     * @param {Phaser.Physics.Arcade.Sprite} projectile - The projectile to add trail to
+     */
+    createProjectileTrail(projectile) {
+        // Check if scene has the required methods (for test compatibility)
+        if (!this.scene.add || !this.scene.add.particles) {
+            return;
+        }
+        
+        // Create particle trail using star particles
+        const particles = this.scene.add.particles(projectile.x, projectile.y, 'star', {
+            scale: { start: 0.3, end: 0 },
+            alpha: { start: 0.8, end: 0 },
+            tint: 0xffffff,
+            lifespan: 300,
+            frequency: 50,
+            quantity: 1,
+            speed: { min: 10, max: 30 },
+            follow: projectile,
+            followOffset: { x: -8, y: 0 }
+        });
+        
+        // Set appropriate depth for particles
+        particles.setDepth(17); // Below projectiles but above background
+        
+        // Store particle emitter on projectile for cleanup
+        projectile.trailParticles = particles;
+    }
+    
+    /**
+     * Plays shooting sound effect using the existing audio system
+     */
+    playShootingSound() {
+        // Since there are no dedicated shooting sound files, create a synthetic sound
+        // using the Web Audio API for a simple shooting effect
+        try {
+            const audioContext = this.scene.sound.context;
+            if (!audioContext) {
+                console.warn('ShootingSystem: No audio context available for shooting sound');
+                return;
+            }
+            
+            // Create a simple shooting sound using oscillators
+            const oscillator = audioContext.createOscillator();
+            const gainNode = audioContext.createGain();
+            
+            // Connect audio nodes
+            oscillator.connect(gainNode);
+            gainNode.connect(audioContext.destination);
+            
+            // Configure shooting sound (quick frequency sweep)
+            oscillator.type = 'square';
+            oscillator.frequency.setValueAtTime(800, audioContext.currentTime);
+            oscillator.frequency.exponentialRampToValueAtTime(200, audioContext.currentTime + 0.1);
+            
+            // Configure volume envelope (quick attack and decay)
+            gainNode.gain.setValueAtTime(0, audioContext.currentTime);
+            gainNode.gain.linearRampToValueAtTime(0.1, audioContext.currentTime + 0.01);
+            gainNode.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + 0.1);
+            
+            // Play the sound
+            oscillator.start(audioContext.currentTime);
+            oscillator.stop(audioContext.currentTime + 0.1);
+            
+        } catch (error) {
+            console.warn('ShootingSystem: Could not create shooting sound effect:', error);
+        }
     }
 
     /**

@@ -14,7 +14,7 @@ export default class Enemy extends Phaser.Physics.Arcade.Sprite {
      * @param {number|string} frame - Frame for the enemy sprite
      * @param {Object} config - Configuration options
      */
-    constructor(scene, x, y, texture = 'ponygirl', frame = 'little_girl_standing_3', config = {}) {
+    constructor(scene, x, y, texture = 'unicorn_enemy', frame = 'unicorn_enemy_0', config = {}) {
         super(scene, x, y, texture, frame)
         
         this.scene = scene
@@ -38,7 +38,7 @@ export default class Enemy extends Phaser.Physics.Arcade.Sprite {
         const targetWidth = 100
         const targetHeight = 100
         this.body.setSize(targetWidth * 0.8, targetHeight * 0.8)
-        this.body.setOffset(targetWidth * 0.1, targetHeight * 0.1)
+        this.body.setOffset(targetWidth *  0.05, targetHeight * 2.5)
         
         // Set depth according to design specification (depth 16)
         this.setDepth(16)
@@ -59,7 +59,22 @@ export default class Enemy extends Phaser.Physics.Arcade.Sprite {
         // Generate unique ID for this enemy
         this.enemyId = `enemy_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
         
+        const anims = scene.anims
+        
+        anims.create({
+            key: 'dead_enemy',
+            frames: anims.generateFrameNames(texture, {prefix: 'unicorn_enemy_',start:1, end: 3, zeroPad: 0 }),
+            frameRate: 6,
+            repeat: 0
+        })
+        anims.create({
+            key: 'walk_enemy',
+            frames: anims.generateFrameNames(texture, { prefix: 'unicorn_enemy_',start:0, end: 4, zeroPad: 0  }),
+            frameRate: 5,
+            repeat: -1
+        })
         console.log(`Enemy created: ${this.enemyId} at (${x}, ${y}) with ${this.health} health`)
+        this.anims.play('walk_enemy')
     }
     
     /**
