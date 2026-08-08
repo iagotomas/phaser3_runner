@@ -1,11 +1,10 @@
-name: Build and Test
+name: Build
 
 on:
   push:
-    branches: [ master ]
+    branches: [master]
   pull_request:
-    branches: [ master ]
-  workflow_dispatch:  
+    branches: [master]
 
 jobs:
   build:
@@ -13,105 +12,22 @@ jobs:
 
     strategy:
       matrix:
-        node-version: [ 20.x ]
+        node-version: [20.x, 22.x]
 
     steps:
-    - uses: actions/checkout@v4
-      with:
-        fetch-depth: 0  # Fetch all history for git hash
+      - uses: actions/checkout@v4
 
-    - name: Use Node.js ${{ matrix.node-version }}
-      uses: actions/setup-node@v4
-      with:
-        node-version: ${{ matrix.node-version }}
-        cache: 'yarn'
-    - name: Get yarn cache directory path
-      id: yarn-cache-dir-path
-      run: |
-        echo "::set-output name=dir::$(yarn cache dir)"
-        echo "::set-output name=version::$(yarn -v)"
-    - name: Install Yarn
-      run: npm install -g yarn
-
-    - name: Install dependencies
-      run: yarn install --frozen-lockfile
-
-    - name: Build
-      run: yarn run build
-      env:
-        CI: true
-        GITHUB_RUN_ID: ${{ github.run_id }}
-
-    - name: Check build artifacts
-      run: |
-        if [ ! -d "build" ]; then
-          echo "Build directory not found!"
-          exit 1
-        fi
-        if [ ! -f "build/index.html" ]; then
-          echo "index.html not found in build!"
-          exit 1
-        fi
-        if [ ! -f "build/manifest.json" ]; then
-          echo "manifest.json not found in build!"
-          exit 1
-        fi
-
-    - name: Upload build artifacts
-      uses: actions/upload-artifact@v4
-      with:
-        name: susanasland-release-${{ github.ref_name }}-${{ github.run_id }}
-        path: build/
-        retention-days: 7
-
-    - name: Cache dependencies
-      uses: actions/cache@v4
-      with:
-        path: |
-          .yarn/cache
-          .yarn/unplugged
-          .yarn/build-state.yml
-          .yarn/install-state.gz          
-          **/node_modules
-          ${{ steps.yarn-cache-dir-path.outputs.dir }}
-        key: ${{ runner.os }}-yarn-${{ hashFiles('yarn.lock') }}
-        restore-keys: |
-          ${{ runner.os }}-yarn-
-
-  deploy:
-    needs: build
-    runs-on: ubuntu-latest
-    environment: production
-    # Deploy on push to master or manual trigger
-    if: github.event_name == 'workflow_dispatch' || (github.event_name == 'push' && github.ref == 'refs/heads/master')
-    
-    steps:
-      - name: Download build artifacts
-        uses: actions/download-artifact@v4
+      - name: Use Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v4
         with:
-          name: susanasland-release-${{ github.ref_name }}-${{ github.run_id }}
-          path: build
+          node-version: ${{ matrix.node-version }}
+          cache: yarn
 
-      - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@v4
-        with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: ${{ vars.AWS_REGION }}
+      - name: Install dependencies
+        run: yarn install
 
-      - name: Deploy to S3
-        run: |
-          aws s3 sync build/ s3://${{ vars.S3_BUCKET }} \
-            --delete \
-            --cache-control "max-age=3600,public" \
-            --exclude "*.html" \
-            --exclude "manifest.json"
+      - name: Run tests
+        run: yarn test
 
-      - name: Deploy HTML and manifest with no-cache
-        run: |
-          aws s3 sync build/ s3://${{ vars.S3_BUCKET }} \
-            --exclude "*" \
-            --include "*.html" \
-            --include "manifest.json" \
-            --cache-control "no-cache,no-store,must-revalidate" \
-            --content-type "text/html" 
+      - name: Build
+        run: yarn build
