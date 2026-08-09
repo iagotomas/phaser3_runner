@@ -16,9 +16,10 @@ export default class ShopUI extends Phaser.GameObjects.Container {
         super(scene, x, y);
         this.scene = scene;
         this.visible = false;
-        this.itemContainer = this.scene.add.container(); // New container for items
+        this.itemContainer = this;
+        this.currentPage = 0;
+        this.itemsPerPage = 4;
         this.createUI();
-        this.itemContainer.setDepth(1001);
         this.setDepth(1000);
         scene.add.existing(this);
     }
@@ -30,8 +31,7 @@ export default class ShopUI extends Phaser.GameObjects.Container {
     createUI() {
         // Remove existing children if any
         //this.removeAll(true);
-        this.itemContainer.removeAll(true);
-        this.add(this.itemContainer); // Add item container to the ShopUI
+        this.removeAll(true);
         const width = this.scene.cameras.main.width;
         const height = this.scene.cameras.main.height;
         
@@ -58,35 +58,52 @@ export default class ShopUI extends Phaser.GameObjects.Container {
         shopBg.setScale(scale);
         this.add(shopBg);
 
-        
-        // Calculate item positions considering the scale
-        const shelfTop = height - (shopBg.displayHeight * 0.46 * scale); // Adjusted for scale
-        const itemSpacing = (shopBg.displayWidth) * 0.16 * scale; // Adjusted for scale
-        const startX = scale * width / 2 - (itemSpacing * 1.45);
-        
-        // Create a mask for the item container to show only 4 items
-        const mask = this.scene.add.graphics();
-        mask.fillStyle(0xffffff);
-        mask.fillRect(0, 0, width * 0.8, height * 0.5);
-        this.itemContainer.setMask(new Phaser.Display.Masks.GeometryMask(this.scene, mask));
-
-        // Position the item container
-        this.itemContainer.setPosition(width / 2, shelfTop); // Position above the shelf
-        //this.itemContainer.setScrollFactor(0);
-        this.itemContainer.setVisible(true);
+        const items = this.scene.player.customization.unlockables.hats;
+        const pageCount = Math.max(1, Math.ceil(items.length / this.itemsPerPage));
+        this.currentPage = Math.min(this.currentPage, pageCount - 1);
+        const pageItems = items.slice(
+            this.currentPage * this.itemsPerPage,
+            (this.currentPage + 1) * this.itemsPerPage
+        );
+        const boxPositions = [
+            { x: 260, y: 475 },
+            { x: 410, y: 475 },
+            { x: 565, y: 475 },
+            { x: 720, y: 475 }
+        ];
 
         // Create item buttons
-        this.scene.player.customization.unlockables.hats.forEach((item, index) => {
-            const x = startX + (index % 4) * (80 + 10); // Adjusted for scale
-            const y = Math.floor(index / 4) * (60 + 10); // Adjusted for scale
-            
+        pageItems.forEach((item, index) => {
             const itemButton = this.createItemButton(item);
-            itemButton.setPosition(x, y);
-            this.itemContainer.add(itemButton);
+            itemButton.setPosition(
+                width / 2 + (boxPositions[index].x - shopBg.width / 2) * scale,
+                height / 2 + (boxPositions[index].y - shopBg.height / 2) * scale
+            );
+            this.add(itemButton);
         });
 
-        // Debugging: Log the number of items added
-        console.log(`Number of items added: ${this.itemContainer.list.length}`);
+        const navigationY = height / 2 + 315 * scale;
+        const pageText = this.scene.add.text(width / 2, navigationY, `${this.currentPage + 1} / ${pageCount}`, {
+            fontSize: '28px',
+            fontFamily: 'Coming Soon',
+            color: '#ffffff',
+            stroke: '#000000',
+            strokeThickness: 4
+        }).setOrigin(0.5).setScrollFactor(0);
+        this.add(pageText);
+
+        if (this.currentPage > 0) {
+            this.addPageButton(width / 2 - 150 * scale, navigationY, '<', () => {
+                this.currentPage -= 1;
+                this.refreshPage();
+            });
+        }
+        if (this.currentPage < pageCount - 1) {
+            this.addPageButton(width / 2 + 150 * scale, navigationY, '>', () => {
+                this.currentPage += 1;
+                this.refreshPage();
+            });
+        }
 
         // Set initial visibility
         this.setVisible(false);
@@ -100,12 +117,6 @@ export default class ShopUI extends Phaser.GameObjects.Container {
             }
         });
 
-        // Ensure itemContainer is visible
-        this.itemContainer.setVisible(true);
-        
-        // Log position and number of items
-        console.log(`ItemContainer Position: (${this.itemContainer.x}, ${this.itemContainer.y})`);
-        console.log(`Number of items in itemContainer: ${this.itemContainer.list.length}`);
     }
 
     /**
@@ -160,10 +171,33 @@ export default class ShopUI extends Phaser.GameObjects.Container {
      * Handles the resizing of the shop UI, updating its layout.
      */
     handleResize() {
+        const wasVisible = this.visible;
         this.createUI();
-        if (this.visible) {
+        if (wasVisible) {
             this.setVisible(true);
         }
+    }
+
+    refreshPage() {
+        const wasVisible = this.visible;
+        this.createUI();
+        this.setVisible(wasVisible);
+    }
+
+    addPageButton(x, y, label, onClick) {
+        const button = this.scene.add.text(x, y, label, {
+            fontSize: '42px',
+            fontFamily: 'Arial',
+            color: '#ffffff',
+            backgroundColor: '#6d3d21',
+            padding: { x: 16, y: 4 },
+            stroke: '#000000',
+            strokeThickness: 4
+        }).setOrigin(0.5).setScrollFactor(0).setInteractive({ useHandCursor: true });
+        button.on('pointerdown', onClick);
+        button.on('pointerover', () => button.setTint(0xffffaa));
+        button.on('pointerout', () => button.clearTint());
+        this.add(button);
     }
 
     /**
@@ -174,14 +208,12 @@ export default class ShopUI extends Phaser.GameObjects.Container {
     createItemButton(item) {
         const itemContainer = this.scene.add.container();
         
-        const buttonBg = this.scene.add.rectangle(5, -5, 80, 60, 0xffffff)
+        const buttonBg = this.scene.add.rectangle(5, 10, 80, 60, 0xffffff, 0)
             .setInteractive({ useHandCursor: true })
-            .on('pointerdown', () => this.purchaseItem(item))
-            .on('pointerover', () => buttonBg.setFillStyle(0x666666))
-            .on('pointerout', () => buttonBg.setFillStyle(0x444444));
+            .on('pointerdown', () => this.purchaseItem(item));
         
-        const preview = this.scene.add.image(0, 0, item.id)
-            .setScale(0.5);
+        const preview = this.scene.add.image(5, 10, item.sprite || item.id)
+            .setDisplaySize(58, 58);
         
         const text = this.scene.add.text(5, -85, 
             this.scene.player.customization.isUnlocked(item.id) ? 'Owned' : `${item.price} ��`, 
