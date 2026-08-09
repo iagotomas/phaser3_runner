@@ -74,7 +74,7 @@ export default class ShopUI extends Phaser.GameObjects.Container {
 
         // Create item buttons
         pageItems.forEach((item, index) => {
-            const itemButton = this.createItemButton(item);
+            const itemButton = this.createItemButton(item, scale);
             itemButton.setPosition(
                 width / 2 + (boxPositions[index].x - shopBg.width / 2) * scale,
                 height / 2 + (boxPositions[index].y - shopBg.height / 2) * scale
@@ -205,20 +205,21 @@ export default class ShopUI extends Phaser.GameObjects.Container {
      * @param {Object} item - The item to create a button for
      * @returns {Phaser.GameObjects.Container} The container holding the item button
      */
-    createItemButton(item) {
+    createItemButton(item, shopScale = 1) {
         const itemContainer = this.scene.add.container();
+        const previewSize = Math.max(58, Math.round(96 * shopScale));
         
         const buttonBg = this.scene.add.rectangle(5, 10, 80, 60, 0xffffff, 0)
             .setInteractive({ useHandCursor: true })
             .on('pointerdown', () => this.purchaseItem(item));
         
         const preview = this.scene.add.image(5, 10, item.sprite || item.id)
-            .setDisplaySize(58, 58);
+            .setDisplaySize(previewSize, previewSize);
         
         const text = this.scene.add.text(5, -85, 
             this.scene.player.customization.isUnlocked(item.id) ? 'Owned' : `${item.price} ��`, 
             { 
-                fontSize: '32px',
+                fontSize: `${Math.max(20, Math.round(32 * shopScale))}px`,
                 fontFamily: 'Coming Soon',
                 align: 'center',
                 color: '#ffffff',

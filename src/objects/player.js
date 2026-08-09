@@ -154,10 +154,12 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
         // Update hat position if equipped
         if (this.hat) {
             const hatData = this.customization.findItem(this.customization.getEquippedItems().hat)
+            const direction = this.flipX ? -1 : 1
             this.hat.setPosition(
-                this.x + (this.flipX ? -hatData.offset.x : hatData.offset.x), 
-                this.y + hatData.offset.y
+                this.x + direction * hatData.offset.x * this.scaleX,
+                this.y + hatData.offset.y * this.scaleY
             )
+            this.hat.setScale(this.scaleX, this.scaleY)
             this.hat.setFlipX(this.flipX)
             // Ensure hat depth stays correct
             this.hat.setDepth(this.baseDepth + 1)

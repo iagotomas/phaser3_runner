@@ -5,6 +5,7 @@ import ShopUI from '../objects/shopui'
 import AmmunitionUI from '../objects/ammunitionUI'
 import { ShootingSystem } from '../objects/shootingSystem'
 import Enemy from '../objects/enemy'
+import ObstacleManager from '../objects/obstacleManager'
 
 /**
  * Depth hierarchy (from back to front):
@@ -52,10 +53,12 @@ export default class Game extends Phaser.Scene {
         this.lastEnemySpawn = 0;
         this.enemySpawnInterval = 3000; // Spawn enemy every 3 seconds
         this.maxEnemies = 5; // Maximum enemies on screen at once
+        this.obstacleManager = null
     }
     
-    create() {
+    create(data = {}) {
         console.log('game started')
+        this.currentLevel = data.level || 1
 
         // Create initial background immediately
         const sky = this.background('sky')
@@ -245,6 +248,13 @@ export default class Game extends Phaser.Scene {
         // Spawn initial enemies
         this.spawnInitialEnemies()
 
+        // Create jumpable static and moving obstacles across the level.
+        this.obstacleManager = new ObstacleManager(this, this.platformGroup)
+        const totalWidth = this.game.config.width * GAME_TOTAL_WIDTH_SCREENS_MULTIPLIER
+        this.obstacleManager.spawnInitialObstacles(totalWidth, groundY)
+        this.obstacleManager.setupPlayerCollision(this.player)
+        this.shootingSystem.setupTerrainCollision(this.obstacleManager.getObstacleGroup())
+
         // Add background music only if it was successfully loaded
         if (this.cache.audio.exists('bgMusic')) {
             this.bgMusic = this.sound.add('bgMusic', {
@@ -430,7 +440,7 @@ export default class Game extends Phaser.Scene {
         this.cameras.main.setViewport(0, 0, width, height)
 
         // Calculate scale factor for UI elements
-        const scaleFactor = Math.min(width / 1280, height / 820)
+        const scaleFactor = Math.min(width / 1920, height / 1080)
 
         // Update ground platforms if they exist
         if (this.platformGroup) {
@@ -525,8 +535,11 @@ export default class Game extends Phaser.Scene {
     }
 
     levelComplete() {
-        // Notify level manager to progress to next level
-        //this.scene.get('LevelManager').startLevel(this.currentLevel + 1)
+        if (this.currentLevel === 1) {
+            this.scene.start('spaceLevel')
+            return
+        }
+
         console.log("Level end reached")
 
         const endNotice = this.add.text(120, 120, `The End`, {
@@ -835,16 +848,20 @@ export default class Game extends Phaser.Scene {
      * @returns {Enemy} - The created enemy instance
      */
     createEnemy(x, y) {
+        const aiTypes = ['patrol', 'chase', 'ranged']
+        const aiType = aiTypes[Math.floor(Math.random() * aiTypes.length)]
         const enemy = new Enemy(this, x, y, 'unicorn_enemy', 'unicorn_enemy_0', {
-            health: 3,
-            type: 'basic',
-            moveSpeed: 1
+            health: aiType === 'ranged' ? 2 : 3,
+            type: aiType === 'ranged' ? 'ranged' : aiType === 'chase' ? 'chaser' : 'basic',
+            moveSpeed: aiType === 'chase' ? 80 : 50,
+            aiType,
+            target: this.player,
+            chaseRange: 300,
+            attackRange: 400,
+            attackInterval: 2000,
+            damage: aiType === 'ranged' ? 2 : 1
         })
-        
-        // Add enemy to the enemy group
         this.enemyGroup.add(enemy)
-        
-        // Set appropriate depth (depth 16 as specified in requirements)
         enemy.setDepth(16)
         
         return enemy
