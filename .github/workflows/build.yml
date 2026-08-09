@@ -36,6 +36,11 @@ jobs:
     - name: Install dependencies
       run: yarn install --frozen-lockfile
 
+    - name: Create dummy certificate for testing
+      run: |
+        mkdir -p certs
+        openssl req -x509 -nodes -days 365 -newkey rsa:2048 -keyout certs/private.key -out certs/certificate.crt
+        
     - name: Build
       run: yarn run build
       env:
