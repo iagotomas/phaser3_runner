@@ -250,4 +250,68 @@ describe('Enemy', () => {
             expect(mockScene.time.delayedCall).toHaveBeenCalledWith(150, expect.any(Function))
         })
     })
+    describe('varied AI', () => {
+        it('getAiType() returns patrol by default', () => {
+            expect(enemy.getAiType()).toBe('patrol')
+        })
+
+        it('getAiType() returns configured aiType', () => {
+            const mockTarget = { x: 150, y: 200 }
+            const chaseEnemy = new Enemy(mockScene, 100, 200, 'test', 'frame', {
+                aiType: 'chase',
+                target: mockTarget,
+                chaseRange: 300
+            })
+            expect(chaseEnemy.getAiType()).toBe('chase')
+        })
+
+        it('chase enemy moves toward target when in range', () => {
+            const mockTarget = { x: 250, y: 200 }
+            const chaseEnemy = new Enemy(mockScene, 100, 200, 'test', 'frame', {
+                aiType: 'chase',
+                target: mockTarget,
+                chaseRange: 300
+            })
+            chaseEnemy.setVelocityX = vi.fn()
+            chaseEnemy.updateMovement(0)
+            expect(chaseEnemy.setVelocityX).toHaveBeenCalled()
+            const call = chaseEnemy.setVelocityX.mock.calls[0][0]
+            expect(call).toBeGreaterThan(0)
+        })
+
+        it('ranged enemy emits enemyRangedAttack when target in range', () => {
+            const mockTarget = { x: 200, y: 200 }
+            const rangedEnemy = new Enemy(mockScene, 100, 200, 'test', 'frame', {
+                aiType: 'ranged',
+                target: mockTarget,
+                attackRange: 400,
+                attackInterval: 2000
+            })
+            rangedEnemy.setVelocityX = vi.fn()
+            mockScene.events.emit.mockClear()
+            rangedEnemy.lastAttackTime = 0
+            rangedEnemy.updateMovement(3000)
+            expect(mockScene.events.emit).toHaveBeenCalledWith('enemyRangedAttack', {
+                enemy: rangedEnemy,
+                targetX: mockTarget.x,
+                targetY: mockTarget.y
+            })
+        })
+
+        it('ranged enemy does not attack again before attackInterval elapses', () => {
+            const mockTarget = { x: 200, y: 200 }
+            const rangedEnemy = new Enemy(mockScene, 100, 200, 'test', 'frame', {
+                aiType: 'ranged',
+                target: mockTarget,
+                attackRange: 400,
+                attackInterval: 2000
+            })
+            rangedEnemy.setVelocityX = vi.fn()
+            rangedEnemy.lastAttackTime = 2500
+            mockScene.events.emit.mockClear()
+            rangedEnemy.updateMovement(3000)
+            expect(mockScene.events.emit).not.toHaveBeenCalledWith('enemyRangedAttack', expect.anything())
+        })
+    })
+
 })

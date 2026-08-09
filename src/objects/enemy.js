@@ -50,7 +50,21 @@ export default class Enemy extends Phaser.Physics.Arcade.Sprite {
         this.moveSpeed = config.moveSpeed || 50
         this.moveDirection = 1
         this.lastDirectionChange = 0
-        this.directionChangeInterval = 2000 // Change direction every 2 seconds
+        this.directionChangeInterval = config.directionChangeInterval || 2000
+        this.nextDirectionChange = this.directionChangeInterval
+        this.pauseChance = config.pauseChance !== undefined ? config.pauseChance : 0.15
+        this.isPaused = false
+        this.pauseUntil = 0
+
+        // AI type properties
+        this.aiType = config.aiType || 'patrol'
+        this.target = config.target || null
+        this.chaseRange = config.detectionRadius !== undefined
+            ? config.detectionRadius
+            : (config.chaseRange !== undefined ? config.chaseRange : 300)
+        this.attackRange = config.attackRange !== undefined ? config.attackRange : 400
+        this.attackInterval = config.attackInterval !== undefined ? config.attackInterval : 2000
+        this.lastAttackTime = 0
         
         // Visual feedback properties
         this.isFlashing = false
@@ -98,17 +112,83 @@ export default class Enemy extends Phaser.Physics.Arcade.Sprite {
      * @param {number} time - Current game time
      */
     updateMovement(time) {
+        if (this.aiType === 'chase') {
+            this._updateChaseAI(time)
+        } else if (this.aiType === 'ranged') {
+            this._updateRangedAI(time)
+        } else {
+            this._updatePatrolAI(time)
+        }
+    }
+
+    _updatePatrolAI(time) {
         // Change direction periodically
-        if (time - this.lastDirectionChange > this.directionChangeInterval) {
+        if (this.isPaused) {
+            this.setVelocityX(0)
+            if (time >= this.pauseUntil) {
+                this.isPaused = false
+            } else {
+                return
+            }
+        }
+
+        if (time - this.lastDirectionChange >= this.nextDirectionChange) {
             this.moveDirection *= -1
             this.lastDirectionChange = time
+            this.nextDirectionChange = this.directionChangeInterval * (0.7 + Math.random() * 0.8)
+            if (Math.random() < this.pauseChance) {
+                this.isPaused = true
+                this.pauseUntil = time + 250 + Math.random() * 500
+                this.setVelocityX(0)
+                return
+            }
         }
         
         // Apply movement
-        this.setVelocityX(this.moveSpeed * this.moveDirection)
+        const variedSpeed = this.moveSpeed * (0.8 + Math.random() * 0.4)
+        this.setVelocityX(variedSpeed * this.moveDirection)
         
         // Flip sprite based on movement direction
         this.setFlipX(this.moveDirection < 0)
+    }
+
+    _updateChaseAI(time) {
+        if (this.target) {
+            const dx = this.target.x - this.x
+            const distance = Math.abs(dx)
+            if (distance <= this.chaseRange) {
+                const direction = dx > 0 ? 1 : -1
+                this.setVelocityX(this.moveSpeed * direction)
+                this.setFlipX(direction < 0)
+                return
+            }
+        }
+        this._updatePatrolAI(time)
+    }
+
+    _updateRangedAI(time) {
+        if (this.target) {
+            const dx = this.target.x - this.x
+            const dy = this.target.y - this.y
+            const distance = Math.sqrt(dx * dx + dy * dy)
+            if (distance <= this.attackRange) {
+                this.setVelocityX(0)
+                if (time - this.lastAttackTime >= this.attackInterval) {
+                    this.lastAttackTime = time
+                    this.scene.events.emit('enemyRangedAttack', {
+                        enemy: this,
+                        targetX: this.target.x,
+                        targetY: this.target.y
+                    })
+                }
+                return
+            }
+        }
+        this._updatePatrolAI(time)
+    }
+
+    getAiType() {
+        return this.aiType
     }
     
     /**

@@ -5,18 +5,12 @@ import MazeChallenge from './scenes/minigames/mazeChallenge'
 import PuzzleChallenge from './scenes/minigames/puzzleChallenge'
 import HangmanChallenge from './scenes/minigames/hangmanChallenge'
 import MemoryChallenge from './scenes/minigames/memoryChallenge'
+import SpaceLevel from './scenes/spaceLevel'
 import Phaser from 'phaser'
 
 // Reference resolution (design size)
 const GAME_WIDTH = 1920//window.innerWidth>window.innerHeight?window.innerWidth:window.innerHeight//1280
 const GAME_HEIGHT = 1080//window.innerWidth>window.innerHeight?window.innerHeight:window.innerWidth //820
-
-// Get initial window dimensions
-const width = window.innerWidth
-const height = window.innerHeight
-
-// Calculate zoom factor
-const zoom = Math.min(width / GAME_WIDTH, height / GAME_HEIGHT)
 
 export default {
     type: Phaser.CANVAS,
@@ -28,8 +22,6 @@ export default {
         width: GAME_WIDTH,
         height: GAME_HEIGHT,
         autoCenter: Phaser.Scale.CENTER_BOTH,
-        orientation: Phaser.Scale.LANDSCAPE,
-        lockOrientation: true,
         min: {
             width: 480,
             height: 270
@@ -37,8 +29,7 @@ export default {
         max: {
             width: 1920,
             height: 1080
-        },
-        zoom: zoom
+        }
     },
     pixelArt: true,
     backgroundColor: 'rgb(0, 0, 0)',
@@ -59,5 +50,5 @@ export default {
         antialias: false,
         pixelArt: true
     },
-    scene: [ Boot, Preload, Game, MazeChallenge, PuzzleChallenge, HangmanChallenge, MemoryChallenge ]
+    scene: [ Boot, Preload, Game, SpaceLevel, MazeChallenge, PuzzleChallenge, HangmanChallenge, MemoryChallenge ]
 }
