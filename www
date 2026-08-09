@@ -7,7 +7,7 @@ var http = require('http');
 var https = require('https');
 var httpPort = 8080;
 var httpsPort = 8443;  // Standard HTTPS port
-var staticBasePath = './build';
+var staticBasePath = './dist';
 
 var staticServe = function(req, res) {
     console.log("Request [" + req.url + "]") 

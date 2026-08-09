@@ -1,10 +1,11 @@
-import { Scene } from 'phaser'
+import Phaser from 'phaser'
 import Player from '../objects/player'
 import CloudManager from '../objects/cloud'
 import ShopUI from '../objects/shopui'
 import AmmunitionUI from '../objects/ammunitionUI'
 import { ShootingSystem } from '../objects/shootingSystem'
 import Enemy from '../objects/enemy'
+
 /**
  * Depth hierarchy (from back to front):
     0: Sky background
@@ -17,7 +18,7 @@ import Enemy from '../objects/enemy'
  */
 const GAME_TOTAL_WIDTH_SCREENS_MULTIPLIER = 100
 const GROUND_SEGMENT_WIDTH = 142
-export default class Game extends Scene {
+export default class Game extends Phaser.Scene {
     constructor() {
         super('game')
         this.player = null;
@@ -244,14 +245,19 @@ export default class Game extends Scene {
         // Spawn initial enemies
         this.spawnInitialEnemies()
 
-        // Add background music
-        this.bgMusic = this.sound.add('bgMusic', {
-            volume: 0.5,
-            loop: true
-        })
+        // Add background music only if it was successfully loaded
+        if (this.cache.audio.exists('bgMusic')) {
+            this.bgMusic = this.sound.add('bgMusic', {
+                volume: 0.5,
+                loop: true
+            })
 
-        // Start playing music
-        this.bgMusic.play()
+            // Start playing music
+            this.bgMusic.play()
+        } else {
+            console.warn('Background music not loaded; continuing without audio')
+            this.bgMusic = null
+        }
 
         // Add music controls
         this.musicButton = this.add.text(this.scale.width - 50, 50, '🔊', {
@@ -268,7 +274,7 @@ export default class Game extends Scene {
 
         // Load music state from localStorage
         const musicEnabled = this.isMusicEnabled()
-        if (!musicEnabled) {
+        if (this.bgMusic && !musicEnabled) {
             this.bgMusic.pause()
             this.musicButton.setText('🔈')
         }
@@ -589,6 +595,10 @@ export default class Game extends Scene {
     }
 
     toggleMusic() {
+        if (!this.bgMusic) {
+            return
+        }
+
         if (this.bgMusic.isPaused) {
             this.bgMusic.resume()
             this.musicButton.setText('🔊')
@@ -734,7 +744,7 @@ export default class Game extends Scene {
         // Resume main game
         this.physics.resume();
         this.cloudManager.resume();
-        if (this.isMusicEnabled()) this.bgMusic.resume();
+        if (this.bgMusic && this.isMusicEnabled()) this.bgMusic.resume();
 
         // Reset player's scale when leaving the mini-game
         this.player.setScale(1);

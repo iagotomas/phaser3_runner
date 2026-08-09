@@ -1,3 +1,5 @@
+import Phaser from 'phaser';
+
 /**
  * ShopUI class represents the user interface for the shop in the game.
  * It handles the creation and management of the shop UI elements,
@@ -72,12 +74,7 @@ export default class ShopUI extends Phaser.GameObjects.Container {
         this.itemContainer.setPosition(width / 2, shelfTop); // Position above the shelf
         //this.itemContainer.setScrollFactor(0);
         this.itemContainer.setVisible(true);
-        
-        const debugRect = this.scene.add.rectangle(width / 2, shelfTop,width,height,0xffffff,0.5);
-        debugRect.setScrollFactor(0);
-        debugRect.setDepth(1002);
-        debugRect.setVisible(true);
-        this.itemContainer.add(debugRect);
+
         // Create item buttons
         this.scene.player.customization.unlockables.hats.forEach((item, index) => {
             const x = startX + (index % 4) * (80 + 10); // Adjusted for scale

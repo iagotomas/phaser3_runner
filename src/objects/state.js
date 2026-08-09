@@ -1,8 +1,7 @@
-import { Scene, Phaser } from 'phaser'
 export default class State {
   /**
    * 
-   * @param {Scene} scene 
+   * @param {Phaser.Scene} scene 
    * @param {Phaser.Physics.Arcade.Sprite} sprite 
    */
     enter(scene, sprite) {

@@ -1,4 +1,4 @@
-import Phaser, { Scene } from 'phaser'
+import Phaser from 'phaser'
 
 /**
  * CloudManager handles the creation, movement, and dropping of balls from clouds in a Phaser 3 game.

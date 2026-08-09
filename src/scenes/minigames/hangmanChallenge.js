@@ -1,11 +1,11 @@
-import { Scene } from 'phaser';
+import Phaser from 'phaser';
 import { hangmanWords } from './hangmanWords.js';
 
 const fontFamily = 'Tahoma, sans-serif'
 /**
  * Hangman scene class for the Phaser 3 game.  This minigame presents a classic hangman game to the player.
  */
-export default class HangmanChallenge extends Scene {
+export default class HangmanChallenge extends Phaser.Scene {
     /**
      * Constructor for the Hangman scene.  Initializes game variables.
      */

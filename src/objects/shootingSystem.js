@@ -1,3 +1,5 @@
+import Phaser from 'phaser';
+
 /**
  * ShootingSystem class handles projectile creation, physics, and management
  * Manages active projectiles and handles cleanup for performance optimization
@@ -454,13 +456,15 @@ export class ShootingSystem {
     playShootingSound() {
         // Since there are no dedicated shooting sound files, create a synthetic sound
         // using the Web Audio API for a simple shooting effect
+        const sound = this.scene.sound;
+        if (!sound || !sound.context) {
+            console.warn('ShootingSystem: No audio context available for shooting sound');
+            return;
+        }
+
         try {
-            const audioContext = this.scene.sound.context;
-            if (!audioContext) {
-                console.warn('ShootingSystem: No audio context available for shooting sound');
-                return;
-            }
-            
+            const audioContext = sound.context;
+
             // Create a simple shooting sound using oscillators
             const oscillator = audioContext.createOscillator();
             const gainNode = audioContext.createGain();

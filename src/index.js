@@ -1,4 +1,4 @@
-import { Game } from 'phaser'
+import Phaser from 'phaser'
 import config from './config'
 
-let game = new Game(config)
+let game = new Phaser.Game(config)

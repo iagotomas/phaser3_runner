@@ -61,18 +61,22 @@ export default class Enemy extends Phaser.Physics.Arcade.Sprite {
         
         const anims = scene.anims
         
-        anims.create({
-            key: 'dead_enemy',
-            frames: anims.generateFrameNames(texture, {prefix: 'unicorn_enemy_',start:1, end: 3, zeroPad: 0 }),
-            frameRate: 6,
-            repeat: 0
-        })
-        anims.create({
-            key: 'walk_enemy',
-            frames: anims.generateFrameNames(texture, { prefix: 'unicorn_enemy_',start:0, end: 4, zeroPad: 0  }),
-            frameRate: 5,
-            repeat: -1
-        })
+        if (!anims.exists('dead_enemy')) {
+            anims.create({
+                key: 'dead_enemy',
+                frames: anims.generateFrameNames(texture, {prefix: 'unicorn_enemy_',start:1, end: 3, zeroPad: 0 }),
+                frameRate: 6,
+                repeat: 0
+            })
+        }
+        if (!anims.exists('walk_enemy')) {
+            anims.create({
+                key: 'walk_enemy',
+                frames: anims.generateFrameNames(texture, { prefix: 'unicorn_enemy_',start:0, end: 4, zeroPad: 0  }),
+                frameRate: 5,
+                repeat: -1
+            })
+        }
         console.log(`Enemy created: ${this.enemyId} at (${x}, ${y}) with ${this.health} health`)
         this.anims.play('walk_enemy')
     }
