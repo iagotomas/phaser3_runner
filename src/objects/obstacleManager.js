@@ -25,7 +25,7 @@ export default class ObstacleManager {
     }
 
     createStaticObstacle(x, y) {
-        const obs = new Obstacle(this.scene, x, y - 30, { type: 'static' })
+        const obs = new Obstacle(this.scene, x, y-60, { type: 'static' })
         this.obstacleGroup.add(obs)
         return obs
     }

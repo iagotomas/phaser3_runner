@@ -1,16 +1,22 @@
 import Phaser from 'phaser'
 
 export const OBSTACLE_TYPES = { STATIC: 'static', MOVING: 'moving' }
+const STATIC_OBSTACLE_TEXTURE = 'puddle-water'
+const STATIC_OBSTACLE_CROP = { x: 145, y: 160, width: 565, height: 315 }
 
 export default class Obstacle extends Phaser.Physics.Arcade.Image {
     constructor(scene, x, y, config = {}) {
         const type = config.type || 'static'
-        const width = config.width !== undefined ? config.width : 60
-        const height = config.height !== undefined ? config.height : 60
+        const defaultWidth = type === OBSTACLE_TYPES.STATIC ? 120 : 60
+        const defaultHeight = type === OBSTACLE_TYPES.STATIC ? 68 : 60
+        const width = config.width !== undefined ? config.width : defaultWidth
+        const height = config.height !== undefined ? config.height : defaultHeight
         const color = config.color !== undefined ? config.color : 0x8B4513
 
-        const key = `obstacle_tex_${width}_${height}_${color}`
-        if (!scene.textures.exists(key)) {
+        const key = type === OBSTACLE_TYPES.STATIC
+            ? STATIC_OBSTACLE_TEXTURE
+            : `obstacle_tex_${width}_${height}_${color}`
+        if (type !== OBSTACLE_TYPES.STATIC && !scene.textures.exists(key)) {
             const gfx = scene.add.graphics()
             gfx.fillStyle(color, 1)
             gfx.fillRect(0, 0, width, height)
@@ -30,7 +36,16 @@ export default class Obstacle extends Phaser.Physics.Arcade.Image {
         scene.physics.add.existing(this, false)
 
         this.setImmovable(true)
-        this.body.setAllowGravity(false)
+        this.body.setAllowGravity(true)
+        if (type === OBSTACLE_TYPES.STATIC) {
+            this.setCrop(
+                STATIC_OBSTACLE_CROP.x,
+                STATIC_OBSTACLE_CROP.y,
+                STATIC_OBSTACLE_CROP.width,
+                STATIC_OBSTACLE_CROP.height
+            )
+            this.setOffset(0,-60)
+        }
         this.setDisplaySize(width, height)
         this.setDepth(config.depth !== undefined ? config.depth : 10)
 
