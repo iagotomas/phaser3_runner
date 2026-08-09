@@ -32,6 +32,7 @@ export default class Game extends Phaser.Scene {
         this.bgMusic = null;
         this.platformGroup = null;
         this.moveTarget = null;
+        this.activeMovePointerId = null;
         this.targetMarker = null;
         // Initialize score from localStorage or default to 0
         this.coinScore = parseInt(localStorage.getItem('coinScore')) || 0;
@@ -141,11 +142,6 @@ export default class Game extends Phaser.Scene {
         this.handleResize(this.scale.gameSize)
 
         console.log('Game setup complete')
-
-        // Remove or comment out fullscreen handling
-        this.input.on('pointerup', () => {
-            this.scale.startFullscreen()
-        }, this) 
 
         // Score display with persistent value
         this.coinCounter = this.add.text(20, 20, `${this.coinScore}`, {
@@ -316,21 +312,25 @@ export default class Game extends Phaser.Scene {
 
         // Add click/touch handlers for movement
         this.input.on('pointerdown', (pointer) => {
+            if (this.shopUI?.visible) {
+                return
+            }
+
+            const worldPoint = this.cameras.main.getWorldPoint(pointer.x, pointer.y)
+
             // Ignore if clicking on jump button
-            if (jumpButton.getBounds().contains(pointer.x, pointer.y)) {
+            if (jumpButton.getBounds().contains(worldPoint.x, worldPoint.y)) {
                 return
             }
 
             // Ignore if clicking on shoot button
-            if (this.shootButton && this.shootButton.getBounds().contains(pointer.x, pointer.y)) {
+            if (this.shootButton && this.shootButton.getBounds().contains(worldPoint.x, worldPoint.y)) {
                 return
             }
 
-            // Convert screen coordinates to world coordinates
-            const worldPoint = this.cameras.main.getWorldPoint(pointer.x, pointer.y)
-
             // Set move target
             this.moveTarget = worldPoint.x
+            this.activeMovePointerId = pointer.id
 
             // Update and show target marker
             this.targetMarker.setPosition(worldPoint.x, worldPoint.y)
@@ -350,7 +350,7 @@ export default class Game extends Phaser.Scene {
 
         // Add pointer move handler for continuous movement
         this.input.on('pointermove', (pointer) => {
-            if (pointer.isDown && !this.shopUI?.visible) {
+            if (pointer.isDown && pointer.id === this.activeMovePointerId && !this.shopUI?.visible) {
                 // Convert screen coordinates to world coordinates
                 const worldPoint = this.cameras.main.getWorldPoint(pointer.x, pointer.y)
 
@@ -365,15 +365,23 @@ export default class Game extends Phaser.Scene {
         });
 
         // Add pointer up handler
-        this.input.on('pointerup', () => {
+        const stopTouchMovement = (pointer) => {
+            if (pointer && pointer.id !== this.activeMovePointerId) {
+                return
+            }
+
             // Stop movement when pointer is released
             this.moveTarget = null;
+            this.activeMovePointerId = null;
             this.targetMarker.setVisible(false);
-        });
+        }
+        this.input.on('pointerup', stopTouchMovement)
+        this.input.on('pointerupoutside', stopTouchMovement)
 
         // Jump button handlers
         jumpButton
-            .on('pointerdown', () => {
+            .on('pointerdown', (pointer) => {
+                pointer.event?.stopPropagation?.()
                 this.keys.space.isDown = true
             })
             .on('pointerup', () => {
@@ -402,7 +410,8 @@ export default class Game extends Phaser.Scene {
 
         // Shoot button handlers
         this.shootButton
-            .on('pointerdown', () => {
+            .on('pointerdown', (pointer) => {
+                pointer.event?.stopPropagation?.()
                 this.handleShoot()
             })
 
