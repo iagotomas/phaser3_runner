@@ -39,8 +39,8 @@ jobs:
     - name: Create dummy certificate for testing
       run: |
         mkdir -p certs
-        openssl req -x509 -nodes -days 365 -newkey rsa:2048 -keyout certs/private.key -out certs/certificate.crt
-        
+        openssl req -x509 -nodes -days 365 -newkey rsa:2048 -keyout certs/private.key -out certs/certificate.crt -subj '/CN=localhost'
+
     - name: Build
       run: yarn run build
       env:
