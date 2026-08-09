@@ -1,6 +1,7 @@
 node_modules
 assets/original
 build
+dist
 doc
 .vscode/
 certs
