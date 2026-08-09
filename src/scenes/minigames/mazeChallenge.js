@@ -1,11 +1,11 @@
-import { Scene } from 'phaser';
+import Phaser from 'phaser';
 
 /**
  * MazeChallenge class represents the maze minigame in the game.
  * It handles the creation and management of the maze game elements,
  * including the maze walls, player, goal, and timer.
  */ 
-export default class MazeChallenge extends Scene {
+export default class MazeChallenge extends Phaser.Scene {
     constructor() {
         super('mazeChallenge');
 
@@ -14,10 +14,7 @@ export default class MazeChallenge extends Scene {
         this.timeLeft = 0; 
         this.keys = null; // Initialize keys, will be set in create
         this.player = null;
-        // Setup device orientation controls
-        if (window.DeviceOrientationEvent) {
-            window.addEventListener('deviceorientation', (event) => this.handleOrientation(event));
-        }
+        this.orientationHandler = null;
     }
 
     /**
@@ -31,6 +28,12 @@ export default class MazeChallenge extends Scene {
         this.parentScene = data.parentScene;
         this.onComplete = data.onComplete;
         this.keys = this.input.keyboard.createCursorKeys()//this.parentScene.keys;
+
+        // Setup device orientation controls now that the player exists
+        if (window.DeviceOrientationEvent && !this.orientationHandler) {
+            this.orientationHandler = (event) => this.handleOrientation(event);
+            window.addEventListener('deviceorientation', this.orientationHandler);
+        }
         
         // Create background
         this.add.image(0, 0, 'maze', 'maze_background')
@@ -198,6 +201,11 @@ export default class MazeChallenge extends Scene {
      * @param {DeviceOrientationEvent} event - The device orientation event.
      */
     handleOrientation(event) {
+        // Guard against events fired before the player is created
+        if (!this.player || !this.player.body) {
+            return;
+        }
+
         // Get window orientation using Screen Orientation API
         const screenOrientation = screen.orientation?.angle || 0;
 
@@ -316,7 +324,15 @@ export default class MazeChallenge extends Scene {
      */
     endGame(success) {
         // Stop the timer
-        this.timer.remove();
+        if (this.timer) {
+            this.timer.remove();
+        }
+
+        // Remove device orientation listener to avoid leaks/crashes
+        if (this.orientationHandler) {
+            window.removeEventListener('deviceorientation', this.orientationHandler);
+            this.orientationHandler = null;
+        }
         
         // Calculate final score based on remaining time
         const finalScore = success ? this.timeLeft * 10 : 0;

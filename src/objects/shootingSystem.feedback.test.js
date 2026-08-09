@@ -7,6 +7,27 @@ describe('ShootingSystem Visual and Audio Feedback', () => {
     let mockProjectile
 
     beforeEach(() => {
+        // Fixed audio nodes so tests can capture the same instances the implementation uses
+        const fixedOscillator = {
+            connect: vi.fn(),
+            start: vi.fn(),
+            stop: vi.fn(),
+            frequency: {
+                setValueAtTime: vi.fn(),
+                exponentialRampToValueAtTime: vi.fn()
+            },
+            type: 'square'
+        }
+
+        const fixedGain = {
+            connect: vi.fn(),
+            gain: {
+                setValueAtTime: vi.fn(),
+                linearRampToValueAtTime: vi.fn(),
+                exponentialRampToValueAtTime: vi.fn()
+            }
+        }
+
         // Create mock scene with visual and audio capabilities
         mockScene = {
             physics: {
@@ -47,24 +68,8 @@ describe('ShootingSystem Visual and Audio Feedback', () => {
             },
             sound: {
                 context: {
-                    createOscillator: vi.fn(() => ({
-                        connect: vi.fn(),
-                        start: vi.fn(),
-                        stop: vi.fn(),
-                        frequency: {
-                            setValueAtTime: vi.fn(),
-                            exponentialRampToValueAtTime: vi.fn()
-                        },
-                        type: 'square'
-                    })),
-                    createGain: vi.fn(() => ({
-                        connect: vi.fn(),
-                        gain: {
-                            setValueAtTime: vi.fn(),
-                            linearRampToValueAtTime: vi.fn(),
-                            exponentialRampToValueAtTime: vi.fn()
-                        }
-                    })),
+                    createOscillator: vi.fn(() => fixedOscillator),
+                    createGain: vi.fn(() => fixedGain),
                     destination: {},
                     currentTime: 0
                 }

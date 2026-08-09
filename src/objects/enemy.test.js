@@ -22,8 +22,11 @@ vi.mock('phaser', () => ({
                         this.flipX = false
                         this.tint = 0xffffff
                         this.alpha = 1
+                        this.anims = {
+                            play: vi.fn()
+                        }
                     }
-                    
+
                     setCollideWorldBounds() { return this }
                     setBounce() { return this }
                     setGravityY() { return this }
@@ -51,6 +54,11 @@ const mockScene = {
         add: {
             existing: vi.fn()
         }
+    },
+    anims: {
+        exists: vi.fn(() => false),
+        create: vi.fn(),
+        generateFrameNames: vi.fn(() => ['frame1'])
     },
     time: {
         delayedCall: vi.fn()

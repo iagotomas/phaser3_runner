@@ -1,6 +1,6 @@
-import { Scene } from 'phaser';
+import Phaser from 'phaser';
 
-export default class MemoryChallenge extends Scene {
+export default class MemoryChallenge extends Phaser.Scene {
 
     constructor() {
         super('memory');

@@ -1,7 +1,7 @@
-import { Scene } from 'phaser';
+import Phaser from 'phaser';
 import Player from '../../objects/player';
 
-export default class PuzzleChallenge extends Scene {
+export default class PuzzleChallenge extends Phaser.Scene {
     constructor() {
         super('puzzleChallenge');
         this.pieces = [];

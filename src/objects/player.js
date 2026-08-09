@@ -1,4 +1,4 @@
-import Phaser, {Scene} from 'phaser'
+import Phaser from 'phaser'
 import State from '../objects/state'
 import StateMachine from '../objects/statemachine'
 import CustomizationManager from '../objects/customization'
@@ -28,30 +28,38 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
 
         const anims = scene.anims
         const key = texture
-        anims.create({
-            key: 'dead',
-            frames: anims.generateFrameNames(key, {prefix: 'little_girl_riding_',start:1, end: 12, zeroPad: 2 }),
-            frameRate: 6,
-            repeat: 0
-        })
-        anims.create({
-            key: 'walk',
-            frames: anims.generateFrameNames(key, { prefix: 'little_girl_riding_',start:1, end: 12, zeroPad: 2  }),
-            frameRate: 10,
-            repeat: -1
-        })
-        anims.create({
-            key: 'jump',
-            frames: anims.generateFrameNames('ponygirl-jump', {prefix: 'little_girl_riding_jump_',start:1, end: 6, zeroPad: 2 }),
-            frameRate: 8,
-            repeat: 0
-        })
-        anims.create({
-            key: 'idle',
-            frames: anims.generateFrameNames(key, {prefix: 'little_girl_standing_',start:2, end: 5 }),
-            frameRate: 1,
-            repeat: -1
-        }) 
+        if (!anims.exists('dead')) {
+            anims.create({
+                key: 'dead',
+                frames: anims.generateFrameNames(key, {prefix: 'little_girl_riding_',start:1, end: 12, zeroPad: 2 }),
+                frameRate: 6,
+                repeat: 0
+            })
+        }
+        if (!anims.exists('walk')) {
+            anims.create({
+                key: 'walk',
+                frames: anims.generateFrameNames(key, { prefix: 'little_girl_riding_',start:1, end: 12, zeroPad: 2  }),
+                frameRate: 10,
+                repeat: -1
+            })
+        }
+        if (!anims.exists('jump')) {
+            anims.create({
+                key: 'jump',
+                frames: anims.generateFrameNames('ponygirl-jump', {prefix: 'little_girl_riding_jump_',start:1, end: 6, zeroPad: 2 }),
+                frameRate: 8,
+                repeat: 0
+            })
+        }
+        if (!anims.exists('idle')) {
+            anims.create({
+                key: 'idle',
+                frames: anims.generateFrameNames(key, {prefix: 'little_girl_standing_',start:2, end: 4 }),
+                frameRate: 1,
+                repeat: -1
+            })
+        } 
         //this.setCollideWorldBounds(true)   
         this.setBounce(0.5)
         this.setGravityY(300)

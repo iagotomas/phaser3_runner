@@ -13,15 +13,15 @@ jobs:
 
     strategy:
       matrix:
-        node-version: [ 20.x ]
+        node-version: [ 22.x, 24.x ]
 
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v7
       with:
         fetch-depth: 0  # Fetch all history for git hash
 
     - name: Use Node.js ${{ matrix.node-version }}
-      uses: actions/setup-node@v4
+      uses: actions/setup-node@v7
       with:
         node-version: ${{ matrix.node-version }}
         cache: 'yarn'
@@ -36,6 +36,11 @@ jobs:
     - name: Install dependencies
       run: yarn install --frozen-lockfile
 
+    - name: Create dummy certificate for testing
+      run: |
+        mkdir -p certs
+        openssl req -x509 -nodes -days 365 -newkey rsa:2048 -keyout certs/private.key -out certs/certificate.crt -subj '/CN=localhost'
+
     - name: Build
       run: yarn run build
       env:
@@ -44,28 +49,28 @@ jobs:
 
     - name: Check build artifacts
       run: |
-        if [ ! -d "build" ]; then
-          echo "Build directory not found!"
+        if [ ! -d "dist" ]; then
+          echo "Dist directory not found!"
           exit 1
         fi
-        if [ ! -f "build/index.html" ]; then
-          echo "index.html not found in build!"
+        if [ ! -f "dist/index.html" ]; then
+          echo "index.html not found in dist!"
           exit 1
         fi
-        if [ ! -f "build/manifest.json" ]; then
-          echo "manifest.json not found in build!"
+        if [ ! -f "dist/manifest.json" ]; then
+          echo "manifest.json not found in dist!"
           exit 1
         fi
 
     - name: Upload build artifacts
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v7
       with:
-        name: susanasland-release-${{ github.ref_name }}-${{ github.run_id }}
-        path: build/
+        name: susanasland-release
+        path: dist/
         retention-days: 7
 
     - name: Cache dependencies
-      uses: actions/cache@v4
+      uses: actions/cache@v6
       with:
         path: |
           .yarn/cache
@@ -87,10 +92,10 @@ jobs:
     
     steps:
       - name: Download build artifacts
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v7
         with:
-          name: susanasland-release-${{ github.ref_name }}-${{ github.run_id }}
-          path: build
+          name: susanasland-release
+          path: dist
 
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v4
@@ -101,7 +106,7 @@ jobs:
 
       - name: Deploy to S3
         run: |
-          aws s3 sync build/ s3://${{ vars.S3_BUCKET }} \
+          aws s3 sync dist/ s3://${{ vars.S3_BUCKET }} \
             --delete \
             --cache-control "max-age=3600,public" \
             --exclude "*.html" \
@@ -109,7 +114,7 @@ jobs:
 
       - name: Deploy HTML and manifest with no-cache
         run: |
-          aws s3 sync build/ s3://${{ vars.S3_BUCKET }} \
+          aws s3 sync dist/ s3://${{ vars.S3_BUCKET }} \
             --exclude "*" \
             --include "*.html" \
             --include "manifest.json" \

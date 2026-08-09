@@ -1,3 +1,5 @@
+import Phaser from 'phaser';
+
 /**
  * AmmunitionUI class manages the display of ammunition count and status indicators
  * Provides visual feedback for ball inventory state including empty/full indicators
