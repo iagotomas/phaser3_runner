@@ -251,7 +251,6 @@ export default class Game extends Phaser.Scene {
         // Create jumpable static and moving obstacles across the level.
         this.obstacleManager = new ObstacleManager(this, this.platformGroup)
         const totalWidth = this.game.config.width * GAME_TOTAL_WIDTH_SCREENS_MULTIPLIER
-        const groundY = this.scale.height - 24
         this.obstacleManager.spawnInitialObstacles(totalWidth, groundY)
         this.obstacleManager.setupPlayerCollision(this.player)
         this.shootingSystem.setupTerrainCollision(this.obstacleManager.getObstacleGroup())
