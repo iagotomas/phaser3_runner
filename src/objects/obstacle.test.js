@@ -78,9 +78,9 @@ describe('Obstacle', () => {
     })
 
     describe('static obstacle', () => {
-        it('is created with static physics body', () => {
+        it('is created with dynamic physics body for group compatibility', () => {
             const obs = new Obstacle(mockScene, 100, 200, { type: 'static' })
-            expect(mockScene.physics.add.existing).toHaveBeenCalledWith(obs, true)
+            expect(mockScene.physics.add.existing).toHaveBeenCalledWith(obs, false)
         })
 
         it('is immovable', () => {
