@@ -6,12 +6,12 @@ export default class CustomizationManager {
     constructor() {
         this.unlockables = {
             hats: [
-                { id: 'hat1', name: 'Party Hat', price: 10, sprite: 'hat1', offset: { x: -5, y: -90 }, rotation: 0 },
-                { id: 'hat2', name: 'Crown', price: 25, sprite: 'hat2', offset: { x: 0, y: -80 }, rotation: 0 },
-                { id: 'hat3', name: 'Cowboy', price: 50, sprite: 'hat3', offset: { x: 0, y: -60 }, rotation: 0 },
-                { id: 'hat4', name: 'Princess crown', price: 15, sprite: 'hat4', offset: { x: 0, y: -60 }, rotation: 0 },
-                { id: 'hat5', name: 'Pirate', price: 100, sprite: 'hat5', offset: { x: -10, y: -100 }, rotation: 0 },
-                { id: 'hat6', name: 'Tall hat', price: 1, sprite: 'hat6', offset: { x: 0, y: 0 }, rotation: 0 }
+                { id: 'hat1', name: 'Party Hat', price: 10, sprite: 'hat1', offset: { x: -5, y: -120 }, rotation: 0 },
+                { id: 'hat2', name: 'Crown', price: 25, sprite: 'hat2', offset: { x: -5, y: -116 }, rotation: 0 },
+                { id: 'hat3', name: 'Cowboy', price: 50, sprite: 'hat3', offset: { x: -5, y: -100 }, rotation: 0 },
+                { id: 'hat4', name: 'Princess crown', price: 15, sprite: 'hat4', offset: { x: -10, y: -110 }, rotation: 0 },
+                { id: 'hat5', name: 'Pirate', price: 100, sprite: 'hat5', offset: { x: -10, y: -120 }, rotation: 0 },
+                { id: 'hat6', name: 'Tall hat', price: 1, sprite: 'hat6', offset: { x: -20, y: -120 }, rotation: -0.3 }
             ],
             trails: [
                /* { id: 'trail1', name: 'Sparkles', price: 15, particle: 'sparkle' },
@@ -53,7 +53,7 @@ export default class CustomizationManager {
      */
     unlockItem(itemId, coins) {
         const item = this.findItem(itemId)
-        if (item && this.canAfford(item, coins)) {
+        if (item && !this.isUnlocked(itemId) && this.canAfford(item, coins)) {
             this.unlockedItems.push(itemId)
             localStorage.setItem('unlockedItems', JSON.stringify(this.unlockedItems))
             return true
