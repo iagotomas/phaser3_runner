@@ -47,7 +47,7 @@ export default class ShopUI extends Phaser.GameObjects.Container {
             .setScrollFactor(0)
             .setInteractive()
             .on('pointerdown', (pointer, x, y, event) => {
-                event.stopPropagation();
+                event?.stopPropagation?.();
             });
         
         // Scale the background
@@ -108,15 +108,6 @@ export default class ShopUI extends Phaser.GameObjects.Container {
         // Set initial visibility
         this.setVisible(false);
         
-        // Ensure all children ignore scroll
-        this.each(child => {
-            child.setScrollFactor(0);
-            if (child.input) {
-                child.removeInteractive();
-                child.setInteractive();
-            }
-        });
-
     }
 
     /**
@@ -208,10 +199,8 @@ export default class ShopUI extends Phaser.GameObjects.Container {
     createItemButton(item, shopScale = 1) {
         const itemContainer = this.scene.add.container();
         const previewSize = Math.max(58, Math.round(96 * shopScale));
-        
-        const buttonBg = this.scene.add.rectangle(5, 10, 80, 60, 0xffffff, 0)
-            .setInteractive({ useHandCursor: true })
-            .on('pointerdown', () => this.purchaseItem(item));
+
+        const buttonBg = this.scene.add.rectangle(5, 10, 110, 180, 0xffffff, 0);
         
         const preview = this.scene.add.image(5, 10, item.sprite || item.id)
             .setDisplaySize(previewSize, previewSize);
@@ -227,8 +216,18 @@ export default class ShopUI extends Phaser.GameObjects.Container {
                 strokeThickness: 4
             }
         ).setOrigin(0.5);
-        
+
         itemContainer.add([buttonBg, preview, text]);
+        itemContainer
+            .setInteractive(
+                new Phaser.Geom.Rectangle(-55, -115, 120, 200),
+                Phaser.Geom.Rectangle.Contains,
+                { useHandCursor: true }
+            )
+            .on('pointerdown', (pointer) => {
+                pointer.event?.stopPropagation?.();
+                this.purchaseItem(item);
+            });
         return itemContainer;
     }
 } 
