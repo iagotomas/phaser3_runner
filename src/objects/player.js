@@ -4,6 +4,7 @@ import StateMachine from '../objects/statemachine'
 import CustomizationManager from '../objects/customization'
 import BallInventory from '../objects/ballInventory'
 import { ShootingSystem } from '../objects/shootingSystem'
+import { GAME_CONFIG } from '../gameConfig'
 
 export default class Player extends Phaser.Physics.Arcade.Sprite {
   /**
@@ -95,6 +96,45 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
         
         // Apply equipped items
         this.applyCosmetics()
+
+        // Health / Lives system
+        this.maxLives = GAME_CONFIG.maxLives
+        this.currentLives = this.maxLives
+        this.isInvulnerable = false
+    }
+
+    takeDamage() {
+        if (this.isInvulnerable) return;
+
+        this.currentLives--;
+        this.scene.events.emit('livesChanged', this.currentLives);
+
+        if (this.currentLives <= 0) {
+            this.die();
+        } else {
+            this.triggerInvulnerability();
+        }
+    }
+
+    triggerInvulnerability() {
+        this.isInvulnerable = true;
+        this.setAlpha(0.5);
+        this.scene.time.delayedCall(GAME_CONFIG.invulnerabilityDuration, () => {
+            this.isInvulnerable = false;
+            this.setAlpha(1);
+        });
+    }
+
+    die() {
+        this.stateMachine.transition('dead');
+        this.scene.events.emit('gameOver');
+    }
+
+    addLife() {
+        if (this.currentLives < this.maxLives) {
+            this.currentLives++;
+            this.scene.events.emit('livesChanged', this.currentLives);
+        }
     }
 
     applyCosmetics() {

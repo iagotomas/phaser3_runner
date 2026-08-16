@@ -6,6 +6,7 @@ import AmmunitionUI from '../objects/ammunitionUI'
 import { ShootingSystem } from '../objects/shootingSystem'
 import Enemy from '../objects/enemy'
 import ObstacleManager from '../objects/obstacleManager'
+import { GAME_CONFIG } from '../gameConfig'
 
 /**
  * Depth hierarchy (from back to front):
@@ -167,6 +168,19 @@ export default class Game extends Phaser.Scene {
         this.fpsText.setScrollFactor(0);
         this.fpsText.setDepth(100);
 
+        // Lives UI
+        this.livesText = this.add.text(20, 100, `Lives: ${this.player.currentLives}`, {
+            fontSize: '30px',
+            fontFamily: 'Arial',
+            fill: '#ffffff'
+        }).setScrollFactor(0).setDepth(100);
+        this.events.on('livesChanged', (lives) => {
+            this.livesText.setText(`Lives: ${lives}`);
+        });
+        this.events.on('gameOver', () => {
+            this.scene.restart();
+        });
+
         // Level-specific setup
         const endZone = this.add.rectangle(
             this.game.config.width * GAME_TOTAL_WIDTH_SCREENS_MULTIPLIER - 50,
@@ -240,6 +254,11 @@ export default class Game extends Phaser.Scene {
             null,
             this
         )
+        
+        // Add collision between player and enemies
+        this.physics.add.overlap(this.player, this.enemyGroup, (player, enemy) => {
+            player.takeDamage();
+        });
         
         // Spawn initial enemies
         this.spawnInitialEnemies()
