@@ -135,17 +135,20 @@ export default class Enemy extends Phaser.Physics.Arcade.Sprite {
         if (time - this.lastDirectionChange >= this.nextDirectionChange) {
             this.moveDirection *= -1
             this.lastDirectionChange = time
-            this.nextDirectionChange = this.directionChangeInterval * (0.7 + Math.random() * 0.8)
+            // Randomize next interval: 1s to 3s
+            this.nextDirectionChange = this.directionChangeInterval * (0.5 + Math.random() * 1.0)
+            
+            // Randomly pause
             if (Math.random() < this.pauseChance) {
                 this.isPaused = true
-                this.pauseUntil = time + 250 + Math.random() * 500
+                this.pauseUntil = time + 500 + Math.random() * 1000
                 this.setVelocityX(0)
                 return
             }
         }
         
-        // Apply movement
-        const variedSpeed = this.moveSpeed * (0.8 + Math.random() * 0.4)
+        // Apply movement with slight speed variation
+        const variedSpeed = this.moveSpeed * (0.7 + Math.random() * 0.6)
         this.setVelocityX(variedSpeed * this.moveDirection)
         
         // Flip sprite based on movement direction
