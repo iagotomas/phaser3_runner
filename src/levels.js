@@ -1,5 +1,20 @@
-export const LEVELS = [
-    { id: 'runner', name: 'Runner', scene: 'game' },
-    { id: 'space', name: 'Galaxy', scene: 'spaceLevel' },
-    { id: 'maze', name: 'Maze', scene: 'mazeChallenge' }
-]
+export const LEVELS = {
+    1: {
+        name: 'Runner',
+        scene: 'game',
+        gravity: 300,
+        background: 'sky'
+    },
+    2: {
+        name: 'Space',
+        scene: 'spaceLevel',
+        gravity: 0,
+        background: 'space'
+    },
+    3: {
+        name: 'Maze',
+        scene: 'mazeChallenge',
+        gravity: 150,
+        background: 'maze'
+    }
+};

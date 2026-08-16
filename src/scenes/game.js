@@ -5,7 +5,7 @@ import ShopUI from '../objects/shopui'
 import AmmunitionUI from '../objects/ammunitionUI'
 import { ShootingSystem } from '../objects/shootingSystem'
 import Enemy from '../objects/enemy'
-import ObstacleManager from '../objects/obstacleManager'
+import { LEVELS } from '../levels'
 
 /**
  * Depth hierarchy (from back to front):
@@ -60,8 +60,12 @@ export default class Game extends Phaser.Scene {
     create(data = {}) {
         console.log('game started')
         this.currentLevel = data.level || 1
-
-        // Create initial background immediately
+        
+        // Apply level configuration
+        const levelConfig = LEVELS[this.currentLevel]
+        if (levelConfig) {
+            this.physics.world.gravity.y = levelConfig.gravity
+        }
         const sky = this.background('sky')
         if (sky) {
             sky.setDepth(0)
@@ -546,6 +550,10 @@ export default class Game extends Phaser.Scene {
     levelComplete() {
         if (this.currentLevel === 1) {
             this.scene.start('spaceLevel')
+            return
+        } else if (this.currentLevel === 3) {
+            // Game finished
+            this.scene.start('game', { level: 1 })
             return
         }
 
