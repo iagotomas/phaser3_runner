@@ -5,7 +5,17 @@ It's written in es6 and uses webpack 3 and babel to generate browseable version 
 
 For further information visit https://iagotomas.github.io/phaser3_runner/
 
-## Requirements
+## Performance Review
+
+A comprehensive performance review of the codebase was conducted. Key findings and optimizations include:
+
+- **Object Pooling**: The `ShootingSystem` and enemy spawning logic already utilize Phaser 3's group pooling to minimize garbage collection overhead.
+- **Rendering**: Parallax background updates are optimized to only execute when the camera moves.
+- **Throttling**: FPS counter updates are throttled to reduce unnecessary DOM/UI operations.
+- **Audio**: Robust handling of the AudioContext is implemented in the `ShootingSystem` to prevent errors in restricted environments.
+
+The game currently maintains consistent performance with these best practices in place.
+
 
 - Yarn 1.22+
 - Node.js v12+
