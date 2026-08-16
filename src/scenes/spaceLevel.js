@@ -1,4 +1,4 @@
-import Phaser from 'phaser'
+import { LEVELS } from '../levels'
 
 const LEVEL_WIDTH = 6400
 
@@ -9,6 +9,9 @@ export default class SpaceLevel extends Phaser.Scene {
     }
 
     create() {
+        this.currentLevel = 2
+        const levelConfig = LEVELS[this.currentLevel]
+        
         this.add.rectangle(0, 0, this.scale.width, this.scale.height, 0x090b2a).setOrigin(0)
         const stars = this.add.graphics()
         for (let i = 0; i < 180; i += 1) {
