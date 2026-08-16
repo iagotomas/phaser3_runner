@@ -78,17 +78,33 @@ export default class Enemy extends Phaser.Physics.Arcade.Sprite {
         if (!anims.exists('dead_enemy')) {
             anims.create({
                 key: 'dead_enemy',
-                frames: anims.generateFrameNames(texture, {prefix: 'unicorn_enemy_',start:1, end: 3, zeroPad: 0 }),
-                frameRate: 6,
+                frames: anims.generateFrameNames(texture, {prefix: 'unicorn_enemy_',start:1, end: 8, zeroPad: 0 }),
+                frameRate: 12,
                 repeat: 0
             })
         }
         if (!anims.exists('walk_enemy')) {
             anims.create({
                 key: 'walk_enemy',
-                frames: anims.generateFrameNames(texture, { prefix: 'unicorn_enemy_',start:0, end: 4, zeroPad: 0  }),
-                frameRate: 5,
+                frames: anims.generateFrameNames(texture, { prefix: 'unicorn_enemy_',start:0, end: 7, zeroPad: 0  }),
+                frameRate: 10,
                 repeat: -1
+            })
+        }
+        if (!anims.exists('idle_enemy')) {
+            anims.create({
+                key: 'idle_enemy',
+                frames: anims.generateFrameNames(texture, { prefix: 'unicorn_enemy_',start:0, end: 2, zeroPad: 0  }),
+                frameRate: 3,
+                repeat: -1
+            })
+        }
+        if (!anims.exists('attack_enemy')) {
+            anims.create({
+                key: 'attack_enemy',
+                frames: anims.generateFrameNames(texture, { prefix: 'unicorn_enemy_',start:0, end: 5, zeroPad: 0  }),
+                frameRate: 8,
+                repeat: 0
             })
         }
         console.log(`Enemy created: ${this.enemyId} at (${x}, ${y}) with ${this.health} health`)
@@ -125,8 +141,12 @@ export default class Enemy extends Phaser.Physics.Arcade.Sprite {
         // Change direction periodically
         if (this.isPaused) {
             this.setVelocityX(0)
+            if (this.anims.currentAnim.key !== 'idle_enemy') {
+                this.anims.play('idle_enemy')
+            }
             if (time >= this.pauseUntil) {
                 this.isPaused = false
+                this.anims.play('walk_enemy')
             } else {
                 return
             }
@@ -140,6 +160,7 @@ export default class Enemy extends Phaser.Physics.Arcade.Sprite {
                 this.isPaused = true
                 this.pauseUntil = time + 250 + Math.random() * 500
                 this.setVelocityX(0)
+                this.anims.play('idle_enemy')
                 return
             }
         }
@@ -147,6 +168,10 @@ export default class Enemy extends Phaser.Physics.Arcade.Sprite {
         // Apply movement
         const variedSpeed = this.moveSpeed * (0.8 + Math.random() * 0.4)
         this.setVelocityX(variedSpeed * this.moveDirection)
+        
+        if (this.anims.currentAnim.key !== 'walk_enemy') {
+            this.anims.play('walk_enemy')
+        }
         
         // Flip sprite based on movement direction
         this.setFlipX(this.moveDirection < 0)
@@ -173,6 +198,9 @@ export default class Enemy extends Phaser.Physics.Arcade.Sprite {
             const distance = Math.sqrt(dx * dx + dy * dy)
             if (distance <= this.attackRange) {
                 this.setVelocityX(0)
+                if (this.anims.currentAnim.key !== 'attack_enemy') {
+                    this.anims.play('attack_enemy')
+                }
                 if (time - this.lastAttackTime >= this.attackInterval) {
                     this.lastAttackTime = time
                     this.scene.events.emit('enemyRangedAttack', {
@@ -238,13 +266,15 @@ export default class Enemy extends Phaser.Physics.Arcade.Sprite {
     destroyEnemy() {
         console.log(`Enemy ${this.enemyId} destroyed`)
         
+        this.anims.play('dead_enemy')
+        
         // Create destruction effect (simple scale down)
         this.scene.tweens.add({
             targets: this,
             scaleX: 0,
             scaleY: 0,
             alpha: 0,
-            duration: 200,
+            duration: 500,
             ease: 'Power2',
             onComplete: () => {
                 this.destroy()

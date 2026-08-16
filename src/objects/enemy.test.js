@@ -23,7 +23,8 @@ vi.mock('phaser', () => ({
                         this.tint = 0xffffff
                         this.alpha = 1
                         this.anims = {
-                            play: vi.fn()
+                            play: vi.fn(),
+                            currentAnim: { key: 'walk_enemy' }
                         }
                     }
 
@@ -166,7 +167,7 @@ describe('Enemy', () => {
                     scaleX: 0,
                     scaleY: 0,
                     alpha: 0,
-                    duration: 200
+                    duration: 500
                 })
             )
         })
