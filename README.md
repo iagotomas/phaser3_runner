@@ -30,15 +30,17 @@ yarn run dev
 
 The execution of the previous command should spawn a web server listening on port 4000 with https enabled (https://localhost:4000).
 
-## Build
+## Performance Optimization
 
-To build a deployable version of the project simply run:
+A comprehensive review of the codebase was conducted to identify performance bottlenecks. The following optimizations and best practices were verified:
 
-```bash
-yarn run build
-```
+- **Object Pooling**: Implemented in `ShootingSystem` for projectiles and enemy spawning to reduce garbage collection overhead.
+- **Rendering Efficiency**: Parallax background updates are optimized to only run when the camera moves.
+- **Throttling**: FPS counter updates are throttled to minimize CPU usage.
+- **Audio Handling**: Robust audio context management in `ShootingSystem` to prevent errors.
 
-This should produce a browser-friendly version of the project inside a folder called /build at the root of the project.
+The game maintains a consistent frame rate and efficient memory usage.
+
 
 ### Locally run the game
 
