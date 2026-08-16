@@ -23,8 +23,8 @@ export default {
         height: GAME_HEIGHT,
         autoCenter: Phaser.Scale.CENTER_BOTH,
         min: {
-            width: 480,
-            height: 270
+            width: 360,
+            height: 240
         },
         max: {
             width: 1920,

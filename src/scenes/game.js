@@ -298,15 +298,15 @@ export default class Game extends Phaser.Scene {
         jumpButton.setScrollFactor(0)
         jumpButton.setDepth(100)
 
-        const jumpBg = this.add.circle(0, 0, 40, 0x000000, 0.7)
+        const jumpBg = this.add.circle(0, 0, 50, 0x000000, 0.7) // Increased size to 50
         const jumpIcon = this.add.text(0, 0, '↑', {
-            fontSize: '32px',
+            fontSize: '40px', // Increased font size
             color: '#ffffff'
         }).setOrigin(0.5)
 
         jumpButton.add([jumpBg, jumpIcon])
         jumpButton.setInteractive(
-            new Phaser.Geom.Circle(0, 0, 40),
+            new Phaser.Geom.Circle(0, 0, 50), // Increased hit area
             Phaser.Geom.Circle.Contains
         )
 
@@ -396,15 +396,15 @@ export default class Game extends Phaser.Scene {
         this.shootButton.setScrollFactor(0)
         this.shootButton.setDepth(100)
 
-        const shootBg = this.add.circle(0, 0, 40, 0x000000, 0.7)
+        const shootBg = this.add.circle(0, 0, 50, 0x000000, 0.7) // Increased size to 50
         const shootIcon = this.add.text(0, 0, '🎯', {
-            fontSize: '28px',
+            fontSize: '36px', // Increased font size
             color: '#ffffff'
         }).setOrigin(0.5)
 
         this.shootButton.add([shootBg, shootIcon])
         this.shootButton.setInteractive(
-            new Phaser.Geom.Circle(0, 0, 40),
+            new Phaser.Geom.Circle(0, 0, 50), // Increased hit area
             Phaser.Geom.Circle.Contains
         )
 
