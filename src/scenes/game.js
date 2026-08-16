@@ -4,6 +4,7 @@ import CloudManager from '../objects/cloud'
 import ShopUI from '../objects/shopui'
 import AmmunitionUI from '../objects/ammunitionUI'
 import { ShootingSystem } from '../objects/shootingSystem'
+import Boss from '../objects/boss'
 import Enemy from '../objects/enemy'
 import ObstacleManager from '../objects/obstacleManager'
 
@@ -188,6 +189,11 @@ export default class Game extends Phaser.Scene {
             null,
             this
         );
+
+        // Boss encounter
+        this.boss = null
+        this.bossSpawned = false
+        this.events.on('bossDefeated', this.handleBossDefeated, this)
 
         // Add shop button
         this.shopButton = this.add.text(this.scale.width - 150, 50, '🛍️ Shop', {
@@ -544,6 +550,16 @@ export default class Game extends Phaser.Scene {
     }
 
     levelComplete() {
+        if (this.currentLevel === 1 && !this.bossSpawned) {
+            this.spawnBoss()
+            return
+        }
+        
+        if (this.currentLevel === 1 && this.bossSpawned) {
+            // Boss not defeated yet
+            return
+        }
+
         if (this.currentLevel === 1) {
             this.scene.start('spaceLevel')
             return
@@ -560,6 +576,23 @@ export default class Game extends Phaser.Scene {
             fill: '#ffffff'
         })
         endNotice.setScrollFactor(0);
+    }
+
+    spawnBoss() {
+        this.bossSpawned = true
+        this.boss = new Boss(this, this.player.x + 500, this.scale.height - 200, 'unicorn_enemy')
+        this.physics.add.collider(this.boss, this.platformGroup)
+        this.physics.add.overlap(this.shootingSystem.projectileGroup, this.boss, (projectile, boss) => {
+            this.handleProjectileEnemyCollision(projectile, boss)
+        })
+        console.log('Boss spawned!')
+    }
+
+    handleBossDefeated() {
+        console.log('Boss defeated! Level complete.')
+        this.boss = null
+        // Proceed to next level
+        this.scene.start('spaceLevel')
     }
 
     background(frame) {
