@@ -33,7 +33,7 @@ export default class Obstacle extends Phaser.Physics.Arcade.Image {
         scene.add.existing(this)
         // ObstacleManager stores all obstacles in a dynamic physics group.
         // Using a static body here causes Phaser group callbacks to fail.
-        scene.physics.add.existing(this)
+        scene.physics.add.existing(this, false)
 
         this.setImmovable(true)
         if (type === OBSTACLE_TYPES.STATIC) {
