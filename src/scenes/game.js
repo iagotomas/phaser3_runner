@@ -17,7 +17,7 @@ import ObstacleManager from '../objects/obstacleManager'
     100: UI elements (counters, buttons)
     1000: Shop UI and overlays
  */
-const GAME_TOTAL_WIDTH_SCREENS_MULTIPLIER = 100
+const GAME_TOTAL_WIDTH_SCREENS_MULTIPLIER = 10
 const GROUND_SEGMENT_WIDTH = 142
 export default class Game extends Phaser.Scene {
     constructor() {

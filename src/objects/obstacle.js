@@ -33,23 +33,26 @@ export default class Obstacle extends Phaser.Physics.Arcade.Image {
         scene.add.existing(this)
         // ObstacleManager stores all obstacles in a dynamic physics group.
         // Using a static body here causes Phaser group callbacks to fail.
-        scene.physics.add.existing(this, false)
+        scene.physics.add.existing(this)
 
         this.setImmovable(true)
-        this.body.setAllowGravity(true)
         if (type === OBSTACLE_TYPES.STATIC) {
+            this.body.setAllowGravity(false)
             this.setCrop(
                 STATIC_OBSTACLE_CROP.x,
                 STATIC_OBSTACLE_CROP.y,
                 STATIC_OBSTACLE_CROP.width,
                 STATIC_OBSTACLE_CROP.height
             )
-            this.setOffset(0,-60)
+            
+        } else {
+            // Moving obstacles: disable gravity
+            this.body.setAllowGravity(false)
         }
         this.setDisplaySize(width, height)
         this.setDepth(config.depth !== undefined ? config.depth : 10)
 
-        if (type !== 'static') {
+        if (type !== OBSTACLE_TYPES.STATIC) {
             const moveAxis = config.moveAxis || 'horizontal'
             const moveDistance = config.moveDistance !== undefined ? config.moveDistance : 150
             const moveSpeed = config.moveSpeed !== undefined ? config.moveSpeed : 80
