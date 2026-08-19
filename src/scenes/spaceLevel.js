@@ -1,4 +1,6 @@
 import Phaser from 'phaser'
+import Player from '../objects/player'
+
 
 const LEVEL_WIDTH = 6400
 
@@ -16,7 +18,9 @@ export default class SpaceLevel extends Phaser.Scene {
             stars.fillCircle(Phaser.Math.Between(0, LEVEL_WIDTH), Phaser.Math.Between(20, this.scale.height - 80), Phaser.Math.Between(1, 3))
         }
         this.physics.world.setBounds(0, 0, LEVEL_WIDTH, this.scale.height)
-        this.player = this.physics.add.rectangle(120, this.scale.height / 2, 42, 42, 0x65f4ff)
+        this.player = new Player(this, 60, LEVEL_WIDTH - 80, 'ponygirl')
+        this.player.setDepth(20) // Player depth above platforms
+        this.player.setScale(1)
         this.player.body.setAllowGravity(false)
         this.player.body.setCollideWorldBounds(true)
         this.cursors = this.input.keyboard.createCursorKeys()

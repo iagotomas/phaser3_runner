@@ -21,6 +21,7 @@ vi.mock('phaser', () => ({
                         this.immovable = false
                     }
                     setImmovable(v) { this.immovable = v; return this }
+                    setCrop(x, y, w, h) { this.crop = { x, y, w, h }; return this }
                     setDisplaySize(w, h) { this.displayWidth = w; this.displayHeight = h; return this }
                     setDepth(v) { this.depth = v; return this }
                     refreshBody() { return this }
@@ -88,10 +89,15 @@ describe('Obstacle', () => {
             expect(obs.immovable).toBe(true)
         })
 
-        it('uses default dimensions 60x60', () => {
+        it('uses puddle dimensions that preserve its wide shape', () => {
             const obs = new Obstacle(mockScene, 100, 200)
-            expect(obs.displayWidth).toBe(60)
-            expect(obs.displayHeight).toBe(60)
+            expect(obs.displayWidth).toBe(120)
+            expect(obs.displayHeight).toBe(68)
+        })
+
+        it('crops the transparent image margins', () => {
+            const obs = new Obstacle(mockScene, 100, 200)
+            expect(obs.crop).toEqual({ x: 145, y: 160, w: 565, h: 315 })
         })
 
         it('uses custom dimensions', () => {
@@ -100,16 +106,9 @@ describe('Obstacle', () => {
             expect(obs.displayHeight).toBe(40)
         })
 
-        it('creates texture when it does not exist', () => {
-            new Obstacle(mockScene, 100, 200, { type: 'static' })
-            expect(mockScene.add.graphics).toHaveBeenCalled()
-            expect(mockScene._gfx.generateTexture).toHaveBeenCalled()
-            expect(mockScene._gfx.destroy).toHaveBeenCalled()
-        })
-
-        it('skips texture creation when texture already exists', () => {
-            mockScene.textures.exists = vi.fn(() => true)
-            new Obstacle(mockScene, 100, 200, { type: 'static' })
+        it('uses the puddle-water texture', () => {
+            const obs = new Obstacle(mockScene, 100, 200, { type: 'static' })
+            expect(obs.texture).toBe('puddle-water')
             expect(mockScene.add.graphics).not.toHaveBeenCalled()
         })
 

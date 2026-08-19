@@ -147,6 +147,7 @@ export default class Preload extends Phaser.Scene {
         this.load.atlas('memory', 'assets/memory/memory.png', 'assets/memory/memory.json')
         this.load.atlas('ponygirl-jump', 'assets/girl_jumping.png', 'assets/girl_jumping.json')
         this.load.image('ground', 'assets/platform-cake.png')
+        this.load.image('puddle-water', 'assets/puddle-water.png')
         this.load.image('platform', 'assets/background/level1/Layers/layer01.png')
         this.load.image('shopbg', 'assets/shop_shelf.png')
         this.load.image('puzzleImage', 'assets/puzzle/splash.png')
