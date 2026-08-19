@@ -78,17 +78,33 @@ export default class Enemy extends Phaser.Physics.Arcade.Sprite {
         if (!anims.exists('dead_enemy')) {
             anims.create({
                 key: 'dead_enemy',
-                frames: anims.generateFrameNames(texture, {prefix: 'unicorn_enemy_',start:1, end: 3, zeroPad: 0 }),
-                frameRate: 6,
+                frames: anims.generateFrameNames(texture, {prefix: 'unicorn_enemy_', start: 0, end: 6, zeroPad: 0 }),
+                frameRate: 10,
                 repeat: 0
             })
         }
         if (!anims.exists('walk_enemy')) {
             anims.create({
                 key: 'walk_enemy',
-                frames: anims.generateFrameNames(texture, { prefix: 'unicorn_enemy_',start:0, end: 4, zeroPad: 0  }),
-                frameRate: 5,
+                frames: anims.generateFrameNames(texture, { prefix: 'unicorn_enemy_', start: 0, end: 6, zeroPad: 0  }),
+                frameRate: 8,
                 repeat: -1
+            })
+        }
+        if (!anims.exists('idle_enemy')) {
+            anims.create({
+                key: 'idle_enemy',
+                frames: anims.generateFrameNames(texture, { prefix: 'unicorn_enemy_', start: 0, end: 2, zeroPad: 0  }),
+                frameRate: 2,
+                repeat: -1
+            })
+        }
+        if (!anims.exists('attack_enemy')) {
+            anims.create({
+                key: 'attack_enemy',
+                frames: anims.generateFrameNames(texture, { prefix: 'unicorn_enemy_', start: 3, end: 6, zeroPad: 0  }),
+                frameRate: 12,
+                repeat: 0
             })
         }
         console.log(`Enemy created: ${this.enemyId} at (${x}, ${y}) with ${this.health} health`)
@@ -125,8 +141,12 @@ export default class Enemy extends Phaser.Physics.Arcade.Sprite {
         // Change direction periodically
         if (this.isPaused) {
             this.setVelocityX(0)
+            if (this.anims.currentAnim?.key !== 'idle_enemy') {
+                this.anims.play('idle_enemy', true)
+            }
             if (time >= this.pauseUntil) {
                 this.isPaused = false
+                this.anims.play('walk_enemy', true)
             } else {
                 return
             }
@@ -140,6 +160,7 @@ export default class Enemy extends Phaser.Physics.Arcade.Sprite {
                 this.isPaused = true
                 this.pauseUntil = time + 250 + Math.random() * 500
                 this.setVelocityX(0)
+                this.anims.play('idle_enemy', true)
                 return
             }
         }
@@ -149,7 +170,23 @@ export default class Enemy extends Phaser.Physics.Arcade.Sprite {
         this.setVelocityX(variedSpeed * this.moveDirection)
         
         // Flip sprite based on movement direction
-        this.setFlipX(this.moveDirection < 0)
+        const newFlipX = this.moveDirection < 0;
+        if (this.flipX !== newFlipX) {
+            this.setFlipX(newFlipX);
+            this.scene.tweens.add({
+                targets: this,
+                scaleX: 0,
+                duration: 100,
+                yoyo: true,
+                onComplete: () => {
+                    this.scaleX = 1;
+                }
+            });
+        }
+        
+        if (this.anims.currentAnim?.key !== 'walk_enemy') {
+            this.anims.play('walk_enemy', true)
+        }
     }
 
     _updateChaseAI(time) {
@@ -175,10 +212,18 @@ export default class Enemy extends Phaser.Physics.Arcade.Sprite {
                 this.setVelocityX(0)
                 if (time - this.lastAttackTime >= this.attackInterval) {
                     this.lastAttackTime = time
+                    this.anims.play('attack_enemy', true)
+                    
+                    // Trigger attack immediately for testing/simplicity, 
+                    // or use the animation complete event if the engine supports it
                     this.scene.events.emit('enemyRangedAttack', {
                         enemy: this,
                         targetX: this.target.x,
                         targetY: this.target.y
+                    })
+                    
+                    this.scene.time.delayedCall(500, () => {
+                        if (this.active) this.anims.play('walk_enemy', true)
                     })
                 }
                 return
@@ -238,13 +283,15 @@ export default class Enemy extends Phaser.Physics.Arcade.Sprite {
     destroyEnemy() {
         console.log(`Enemy ${this.enemyId} destroyed`)
         
+        this.anims.play('dead_enemy', true)
+        
         // Create destruction effect (simple scale down)
         this.scene.tweens.add({
             targets: this,
             scaleX: 0,
             scaleY: 0,
             alpha: 0,
-            duration: 200,
+            duration: 500,
             ease: 'Power2',
             onComplete: () => {
                 this.destroy()
