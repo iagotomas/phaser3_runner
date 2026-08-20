@@ -45,6 +45,10 @@ export default {
             fps: 30
         }
     },
+    player: {
+        maxLives: 3,
+        invulnerabilityDuration: 1000 // ms
+    },
     render: {
         powerPreference: 'high-performance',
         antialias: false,

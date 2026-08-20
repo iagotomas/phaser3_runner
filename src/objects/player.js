@@ -4,6 +4,7 @@ import StateMachine from '../objects/statemachine'
 import CustomizationManager from '../objects/customization'
 import BallInventory from '../objects/ballInventory'
 import { ShootingSystem } from '../objects/shootingSystem'
+import config from '../config'
 
 export default class Player extends Phaser.Physics.Arcade.Sprite {
   /**
@@ -19,6 +20,12 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
         this.scene = scene
         scene.add.existing(this)
         scene.physics.add.existing(this)
+        
+        // Lives system
+        this.maxLives = config.player.maxLives
+        this.currentLives = this.maxLives
+        this.isInvulnerable = false
+        
         // Set default size (320x320)
         const targetWidth = 310
         const targetHeight = 310
@@ -95,6 +102,42 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
         
         // Apply equipped items
         this.applyCosmetics()
+    }
+
+    takeDamage() {
+        if (this.isInvulnerable) return;
+        
+        this.currentLives--;
+        this.isInvulnerable = true;
+        
+        // Visual feedback: blink
+        this.scene.tweens.add({
+            targets: this,
+            alpha: 0.5,
+            duration: 100,
+            yoyo: true,
+            repeat: 5
+        });
+        
+        // Reset invulnerability
+        this.scene.time.delayedCall(config.player.invulnerabilityDuration, () => {
+            this.isInvulnerable = false;
+            this.setAlpha(1);
+        });
+        
+        if (this.currentLives <= 0) {
+            this.stateMachine.transition('dead');
+            this.emit('gameover');
+        } else {
+            this.emit('livesChanged', this.currentLives);
+        }
+    }
+    
+    addLife() {
+        if (this.currentLives < this.maxLives) {
+            this.currentLives++;
+            this.emit('livesChanged', this.currentLives);
+        }
     }
 
     applyCosmetics() {
