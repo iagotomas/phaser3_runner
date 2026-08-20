@@ -106,6 +106,25 @@ export default class Game extends Phaser.Scene {
         this.player.setDepth(20) // Player depth above platforms
         this.player.setScale(1)
         this.physics.add.collider(this.player, this.platformGroup)
+        
+        // Lives UI
+        this.livesText = this.add.text(20, 100, `Lives: ${this.player.currentLives}`, {
+            fontSize: '32px',
+            fontFamily: 'Arial',
+            fill: '#ff0000'
+        }).setScrollFactor(0).setDepth(100);
+        
+        this.player.on('livesChanged', (lives) => {
+            this.livesText.setText(`Lives: ${lives}`);
+        });
+        
+        this.player.on('gameover', () => {
+            this.physics.pause();
+            this.add.text(this.scale.width/2, this.scale.height/2, 'GAME OVER', {
+                fontSize: '100px',
+                fill: '#ff0000'
+            }).setOrigin(0.5).setScrollFactor(0).setDepth(1000);
+        });
 
         // Set up camera
         this.cameras.main.setBounds(0, 0, this.game.config.width * GAME_TOTAL_WIDTH_SCREENS_MULTIPLIER, this.game.config.height)
@@ -240,6 +259,19 @@ export default class Game extends Phaser.Scene {
             null,
             this
         )
+        
+        // Add collision between player and enemies
+        this.physics.add.overlap(
+            this.player,
+            this.enemyGroup,
+            (player, enemy) => {
+                player.takeDamage();
+                // Optional: knockback or enemy bounce
+                enemy.destroy(); // Simple: enemy disappears on contact
+            },
+            null,
+            this
+        );
         
         // Spawn initial enemies
         this.spawnInitialEnemies()
