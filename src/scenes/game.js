@@ -1,3 +1,4 @@
+import Boss from '../objects/boss'
 import Phaser from 'phaser'
 import Player from '../objects/player'
 import CloudManager from '../objects/cloud'
@@ -207,6 +208,14 @@ export default class Game extends Phaser.Scene {
             null,
             this
         );
+
+        // Boss encounter trigger
+        this.boss = null;
+        this.physics.add.overlap(this.player, endZone, () => {
+            if (!this.boss) {
+                this.spawnBoss();
+            }
+        }, null, this);
 
         // Add shop button
         this.shopButton = this.add.text(this.scale.width - 150, 50, '🛍️ Shop', {
@@ -573,6 +582,24 @@ export default class Game extends Phaser.Scene {
     starCollect(player, star) {
         star.destroy(false)
         this.updateScore(this.coinScore + 1)
+    }
+
+    spawnBoss() {
+        console.log("Spawning boss!");
+        this.boss = new Boss(this, this.game.config.width * GAME_TOTAL_WIDTH_SCREENS_MULTIPLIER - 200, this.scale.height / 2, 'unicorn_enemy', 'unicorn_enemy_0', {
+            health: 100,
+            damage: 10
+        });
+        this.physics.add.collider(this.boss, this.platformGroup);
+        this.physics.add.overlap(this.shootingSystem.projectileGroup, this.boss, (projectile, boss) => {
+            this.boss.takeDamage(1);
+            this.shootingSystem.cleanupProjectile(projectile);
+        }, null, this);
+        
+        this.events.on('bossDefeated', () => {
+            console.log("Boss defeated!");
+            this.levelComplete();
+        });
     }
 
     levelComplete() {
