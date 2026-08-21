@@ -9,8 +9,8 @@ import SpaceLevel from './scenes/spaceLevel'
 import Phaser from 'phaser'
 
 // Reference resolution (design size)
-const GAME_WIDTH = 1920//window.innerWidth>window.innerHeight?window.innerWidth:window.innerHeight//1280
-const GAME_HEIGHT = 1080//window.innerWidth>window.innerHeight?window.innerHeight:window.innerWidth //820
+const GAME_WIDTH = 1920
+const GAME_HEIGHT = 1080
 
 export default {
     type: Phaser.CANVAS,
