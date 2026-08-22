@@ -1,8 +1,8 @@
 import Phaser from 'phaser';
 
 /**
- * ShootingSystem class handles projectile creation, physics, and management
- * Manages active projectiles and handles cleanup for performance optimization
+ * ShootingSystem class handles projectile creation, physics, and management.
+ * Manages active projectiles and handles cleanup for performance optimization.
  */
 export class ShootingSystem {
     constructor(scene) {
@@ -169,8 +169,8 @@ export class ShootingSystem {
     }
     
     /**
-     * Removes a projectile from the game and cleans up resources
-     * @param {Phaser.Physics.Arcade.Sprite} projectile - The projectile to cleanup
+     * Removes a projectile from the game and cleans up resources.
+     * @param {Phaser.Physics.Arcade.Sprite} projectile - The projectile to cleanup.
      */
     cleanupProjectile(projectile) {
         if (!projectile || !projectile.active) {
@@ -218,7 +218,7 @@ export class ShootingSystem {
     }
     
     /**
-     * Cleans up all active projectiles (useful for scene transitions)
+     * Cleans up all active projectiles (useful for scene transitions).
      */
     cleanupAllProjectiles() {
         const projectilesToCleanup = Array.from(this.activeProjectiles);
@@ -501,7 +501,7 @@ export class ShootingSystem {
     }
     
     /**
-     * Destroys the shooting system and cleans up all resources
+     * Destroys the shooting system and cleans up all resources.
      */
     destroy() {
         this.cleanupAllProjectiles();

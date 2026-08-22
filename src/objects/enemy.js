@@ -107,7 +107,7 @@ export default class Enemy extends Phaser.Physics.Arcade.Sprite {
                 repeat: 0
             })
         }
-        console.log(`Enemy created: ${this.enemyId} at (${x}, ${y}) with ${this.health} health`)
+
         this.anims.play('walk_enemy')
     }
     
@@ -250,7 +250,6 @@ export default class Enemy extends Phaser.Physics.Arcade.Sprite {
         }
         
         this.health -= amount
-        console.log(`Enemy ${this.enemyId} took ${amount} damage. Health: ${this.health}/${this.maxHealth}`)
         
         // Visual feedback for taking damage
         this.flashRed()
