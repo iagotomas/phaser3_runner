@@ -26,10 +26,8 @@ export default class Game extends Phaser.Scene {
         this.fpsText = null;
         this.cloudManager = null;
         this.backgrounds = [];
-        this.controls = null;
         this.shopUI = null;
         this.ammunitionUI = null;
-        this.bgMusic = null;
         this.platformGroup = null;
         this.moveTarget = null;
         this.activeMovePointerId = null;
@@ -284,18 +282,7 @@ export default class Game extends Phaser.Scene {
         this.shootingSystem.setupTerrainCollision(this.obstacleManager.getObstacleGroup())
 
         // Add background music only if it was successfully loaded
-        if (this.cache.audio.exists('bgMusic')) {
-            this.bgMusic = this.sound.add('bgMusic', {
-                volume: 0.5,
-                loop: true
-            })
-
-            // Start playing music
-            this.bgMusic.play()
-        } else {
-            console.warn('Background music not loaded; continuing without audio')
-            this.bgMusic = null
-        }
+        // Background music is now handled by the SoundManager
 
         // Add music controls
         this.musicButton = this.add.text(this.scale.width - 50, 50, '🔊', {
