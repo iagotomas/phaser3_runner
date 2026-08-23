@@ -177,6 +177,9 @@ export default class Preload extends Phaser.Scene {
         this.load.image('hat4', 'assets/cosmetics/princess_crown.png')
         this.load.image('hat5', 'assets/cosmetics/pirate-hat.png')
         this.load.image('hat6', 'assets/cosmetics/tall-hat.png')
+        this.load.image('hat7', 'assets/cosmetics/wizard-hat.png')
+        this.load.image('hat8', 'assets/cosmetics/beanie.png')
+        this.load.image('hat9', 'assets/cosmetics/top-hat.png')
         this.load.image('star', 'assets/particles/star.png')
 
         // Load background music
