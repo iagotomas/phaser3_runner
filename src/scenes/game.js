@@ -7,6 +7,8 @@ import { ShootingSystem } from '../objects/shootingSystem'
 import Enemy from '../objects/enemy'
 import ObstacleManager from '../objects/obstacleManager'
 
+import Boss from '../objects/boss'
+
 /**
  * Depth hierarchy (from back to front):
     0: Sky background
@@ -195,7 +197,7 @@ export default class Game extends Phaser.Scene {
         )
 
         this.physics.add.existing(endZone, true) // Static body
-        this.physics.add.overlap(this.player, endZone, this.levelComplete, null, this)
+        this.physics.add.overlap(this.player, endZone, this.spawnBoss, null, this)
 
         // Add the overlap check
         this.physics.add.overlap(
@@ -560,6 +562,33 @@ export default class Game extends Phaser.Scene {
     starCollect(player, star) {
         star.destroy(false)
         this.updateScore(this.coinScore + 1)
+    }
+
+    spawnBoss(player, endZone) {
+        if (this.bossSpawned) return
+        this.bossSpawned = true
+        endZone.destroy()
+
+        console.log("Boss encounter triggered!")
+        
+        // Stop normal enemy spawning
+        this.events.off('enemyDestroyed', this.handleEnemyDestroyed, this)
+        
+        // Create boss
+        this.boss = new Boss(this, this.game.config.width * GAME_TOTAL_WIDTH_SCREENS_MULTIPLIER - 200, this.scale.height - 150)
+        this.physics.add.collider(this.boss, this.platformGroup)
+        this.physics.add.overlap(this.player, this.boss, () => this.player.takeDamage(), null, this)
+        this.physics.add.overlap(this.shootingSystem.projectileGroup, this.boss, (projectile, boss) => {
+            projectile.destroy()
+            boss.takeDamage(1)
+        }, null, this)
+        
+        this.events.on('bossDefeated', this.handleBossDefeat, this)
+    }
+
+    handleBossDefeat() {
+        console.log("Boss defeated! Level complete.")
+        this.levelComplete()
     }
 
     levelComplete() {
