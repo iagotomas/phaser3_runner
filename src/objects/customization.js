@@ -11,7 +11,10 @@ export default class CustomizationManager {
                 { id: 'hat3', name: 'Cowboy', price: 50, sprite: 'hat3', offset: { x: -5, y: -100 }, rotation: 0 },
                 { id: 'hat4', name: 'Princess crown', price: 15, sprite: 'hat4', offset: { x: -10, y: -110 }, rotation: 0 },
                 { id: 'hat5', name: 'Pirate', price: 100, sprite: 'hat5', offset: { x: -10, y: -120 }, rotation: 0 },
-                { id: 'hat6', name: 'Tall hat', price: 1, sprite: 'hat6', offset: { x: -20, y: -120 }, rotation: -0.3 }
+                { id: 'hat6', name: 'Tall hat', price: 1, sprite: 'hat6', offset: { x: -20, y: -120 }, rotation: -0.3 },
+                { id: 'hat7', name: 'Wizard Hat', price: 75, sprite: 'hat7', offset: { x: -5, y: -120 }, rotation: 0 },
+                { id: 'hat8', name: 'Beanie', price: 20, sprite: 'hat8', offset: { x: -5, y: -110 }, rotation: 0 },
+                { id: 'hat9', name: 'Top Hat', price: 60, sprite: 'hat9', offset: { x: -5, y: -120 }, rotation: 0 }
             ],
             trails: [
                /* { id: 'trail1', name: 'Sparkles', price: 15, particle: 'sparkle' },
